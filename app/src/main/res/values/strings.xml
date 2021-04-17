@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">RouteOptimizer</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoiZ2lhbm5pcy1na2wiLCJhIjoiY2tuNHdmOXh1MHAzODJwbnF0aHM3bGZ5NSJ9.Ex5PA6dp0WCqblXh2eLBmg</string>
 </resources>
