@@ -3,4 +3,5 @@
     <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiZ2lhbm5pcy1na2wiLCJhIjoiY2tuNHdmOXh1MHAzODJwbnF0aHM3bGZ5NSJ9.Ex5PA6dp0WCqblXh2eLBmg</string>
     <string name="user_location_permission_explanation">This app needs location permissions to show its functionality.</string>
     <string name="user_location_permission_not_granted">You didn\'t grant location permissions.</string>
+    <string name="location_search_txt">Location search</string>
 </resources>
