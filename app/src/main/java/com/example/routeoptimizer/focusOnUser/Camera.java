@@ -5,6 +5,8 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 
 public class Camera {
 
+    /* SO FAR NOT USED - SHOULD DELETE */
+
     public static void centerAtUserLocation(MapboxMap mapboxMap) {
         CameraPosition currentCameraPosition = mapboxMap.getCameraPosition();
         double currentZoom = currentCameraPosition.zoom;

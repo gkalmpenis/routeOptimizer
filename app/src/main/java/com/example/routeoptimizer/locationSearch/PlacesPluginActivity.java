@@ -6,6 +6,8 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 
 //public class PlacesPluginActivity extends AppCompatActivity implements OnMapReadyCallback {
 public class PlacesPluginActivity {
+    /* SO FAR NOT USED - SHOULD DELETE */
+
 //    private static final int REQUEST_CODE_AUTOCOMPLETE = 1;
 //    private MapView mapView;
 //    private MapboxMap mapboxMap;
