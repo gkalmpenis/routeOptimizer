@@ -185,13 +185,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // Reveal bottom sheet
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-
-                    System.out.println("<-- Printing attributes of carmen feature\n");
-                    System.out.println("<-- address(): " + selectedCarmenFeature.address() + "\n");
-                    System.out.println("<-- placeName(): " + selectedCarmenFeature.placeName() + "\n");
-                    System.out.println("<-- placeType(): " + selectedCarmenFeature.placeType() + "\n");
-                    System.out.println("<-- properties(): " + selectedCarmenFeature.properties() + "\n");
-                    System.out.println("<-- toJson(): " + selectedCarmenFeature.toJson() + "\n");
                 }
             }
         }
