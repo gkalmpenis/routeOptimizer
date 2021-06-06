@@ -7,11 +7,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.RenderNode;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
@@ -34,8 +34,6 @@ import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
@@ -56,7 +54,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int REQUEST_CODE_AUTOCOMPLETE = 1;
     private String geojsonSourceLayerId = "geojsonSourceLayerId";
     private String symbolIconId = "sumbolIconId";
-    private ArrayList<CarmenFeature> list= new ArrayList<>();
+
+    // variables for manipulating bottomSheet behavior
+    private View bottomSheet;
+    private BottomSheetBehavior<View> bottomSheetBehavior;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +70,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
+
+        // BottomSheet manipulation
+        bottomSheet = findViewById(R.id.bottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN); // Do not reveal bottom sheet on creation of the application.
+        bottomSheet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Show or hide bottomSheet when user clicks anywhere on it
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                } else {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
+            }
+        });
     }
 
     @Override
@@ -79,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 enableLocationComponent(style);
                 initSearchFab(); // Initiates location search
 
-                // Add the symbol layer icon to map for future use
+                // Add the symbol layer icon to map on the currently displayed location
                 style.addImage(symbolIconId, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.blue_marker_view));
 
                 // Create an empty GeoJSON source using the empty feature collection
@@ -164,6 +182,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             ((Point) selectedCarmenFeature.geometry()).longitude()))
                                     .zoom(14)
                                     .build()), 4000);
+
+                    // Reveal bottom sheet
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+                    System.out.println("<-- Printing attributes of carmen feature\n");
+                    System.out.println("<-- address(): " + selectedCarmenFeature.address() + "\n");
+                    System.out.println("<-- placeName(): " + selectedCarmenFeature.placeName() + "\n");
+                    System.out.println("<-- placeType(): " + selectedCarmenFeature.placeType() + "\n");
+                    System.out.println("<-- properties(): " + selectedCarmenFeature.properties() + "\n");
+                    System.out.println("<-- toJson(): " + selectedCarmenFeature.toJson() + "\n");
                 }
             }
         }
