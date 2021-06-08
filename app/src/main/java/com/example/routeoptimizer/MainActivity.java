@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View bottomSheet;
     private BottomSheetBehavior<View> bottomSheetBehavior;
 
+    private TextView placeNameTextView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+
+        placeNameTextView = findViewById(R.id.placeNameTextView);
     }
 
     @Override
@@ -188,13 +193,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     .zoom(14)
                                     .build()), 4000);
 
-                    // Reveal bottom sheet
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    updatePlaceNameInBottomSheet(selectedCarmenFeature);
+
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED); // Reveal bottom sheet
 
                     addSymbolIconInSelectedLocation(style, selectedCarmenFeature);
                 }
             }
         }
+    }
+
+    private void updatePlaceNameInBottomSheet(@NonNull CarmenFeature selectedCarmenFeature) {
+        placeNameTextView.setText(selectedCarmenFeature.placeName());
     }
 
     private void addSymbolIconInSelectedLocation(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
