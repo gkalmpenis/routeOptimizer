@@ -29,6 +29,8 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
@@ -53,7 +55,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     // variables for adding search functionality
     private static final int REQUEST_CODE_AUTOCOMPLETE = 1;
     private String geojsonSourceLayerId = "geojsonSourceLayerId";
-    private String symbolIconId = "sumbolIconId";
+    private String symbolIconId = "sumbolIconId"; // Maybe won't be used, should delete?
+    private String redMarker = "redMarker";
+    private String blueMarker = "blueMarker";
 
     // variables for manipulating bottomSheet behavior
     private View bottomSheet;
@@ -97,14 +101,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 enableLocationComponent(style);
                 initSearchFab(); // Initiates location search
 
-                // Add the symbol layer icon to map on the currently displayed location
-                style.addImage(symbolIconId, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.blue_marker_view));
+                // Add the symbol layer icon to map and specify a name for each of the markers.
+                style.addImage(redMarker, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.mapbox_marker_icon_default));
+                style.addImage(blueMarker, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.map_default_map_marker));
 
                 // Create an empty GeoJSON source using the empty feature collection
                 setUpSource(style);
 
-                // Set up a new symbol layer for displaying the searched location's feature coordinates
-                setupLayer(style);
+                // Set up a new symbol layer for displaying the searched location's feature coordinates - SEEMS NON FUNCTIONAL, DELETE?
+                //setupLayer(style);
             }
         });
     }
@@ -185,9 +190,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // Reveal bottom sheet
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+                    addSymbolIconInSelectedLocation(style, selectedCarmenFeature);
                 }
             }
         }
+    }
+
+    private void addSymbolIconInSelectedLocation(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
+        // Create a SymbolManager to add symbolIcons on map
+        SymbolManager symbolManager = new SymbolManager (mapView, mapboxMap, style);
+
+        // Set non-data-driven properties
+        symbolManager.setIconAllowOverlap(true);
+        symbolManager.setTextAllowOverlap(true);
+
+        // Create a symbol at the specified location.
+        SymbolOptions symbolOptions = new SymbolOptions()
+                //.withLatLng(new LatLng(6.687337, 0.381457)) //for educational purposes - DELETE AFTERWARDS
+                .withLatLng(new LatLng(((Point) selectedCarmenFeature.geometry()).latitude(),
+                        ((Point) selectedCarmenFeature.geometry()).longitude()))
+                .withIconImage(redMarker)
+                .withIconSize(1.0f);
+
+        // Use the manager to draw the symbol
+        symbolManager.create(symbolOptions);
     }
 
     @Override
