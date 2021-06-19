@@ -77,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button addAsStopButton;
     private final String ADD_AS_STOP = "Add as stop"; // Should be exactly the same as the text in R.string.add_stop_txt
     private final String REMOVE_FROM_STOPS = "Remove from stops"; // Should be exactly the same as the text in R.string.remove_stop_txt
+    private final int ADD_NEW_STOP_STATE = 0;
+    private final int REMOVE_A_STOP_STATE = 1;
     private TextView currentStopsCounterTextView;
     private Set<CarmenFeature> setOfStops = new HashSet<>(); // We do not use LinkedHashSet or TreeSet because we don't care about the order
 
@@ -228,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     removeSymbolFromMap(latestSearchedLocationSymbol);
                     latestSearchedLocationSymbol = addSymbolInMap(selectedCarmenFeature, RED_MARKER);
 
-                    refreshStopsButtonState();
+                    changeStateOfStopsButton(ADD_NEW_STOP_STATE);
                     manipulateAddAsStopButton(style, selectedCarmenFeature);
                 }
             }
@@ -265,11 +267,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return createdSymbol;
     }
 
-    private void refreshStopsButtonState() {
+    private void changeStateOfStopsButton(int state) {
         // So far this only changes the text of the button, later it would be good have a different way of understanding the state of the button
         // eg. have a variable for the button state, and if it should be at the "initial" state then text should be "add as stop",
         // if it should be at the "stop selection" state then text should be "remove from stop".
-        addAsStopButton.setText(ADD_AS_STOP);
+        if (state == ADD_NEW_STOP_STATE) { addAsStopButton.setText(ADD_AS_STOP); }
+        if (state == REMOVE_A_STOP_STATE) { addAsStopButton.setText(REMOVE_FROM_STOPS); }
     }
 
     private void manipulateAddAsStopButton(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
@@ -295,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             latestAddedAsStopSymbol = addSymbolInMap(selectedCarmenFeature, BLUE_MARKER);
 
                             // Change the button's text
-                            button.setText(REMOVE_FROM_STOPS);
+                            changeStateOfStopsButton(REMOVE_A_STOP_STATE);
                         }
                         break;
                     case REMOVE_FROM_STOPS:
@@ -312,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                                             // na pairneis panta to "latestAddedAsStopSymbol"
 
                             // Change the button's text
-                            button.setText(ADD_AS_STOP);
+                            changeStateOfStopsButton(ADD_NEW_STOP_STATE);
                         }
                         break;
                     default:
