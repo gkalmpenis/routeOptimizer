@@ -6,6 +6,7 @@
     <string name="location_search_txt">Location search</string>
     <string name="select_place_txt">Select a destination to see its information here.</string>
     <string name="add_stop_txt">Add as stop</string>
+    <string name="remove_stop_txt">Remove from stops</string>
     <string name="current_stops_txt">Current stops:</string>
     <string name="current_stops_counter_txt">0</string>
 </resources>

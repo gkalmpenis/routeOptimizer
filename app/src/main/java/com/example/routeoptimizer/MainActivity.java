@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
@@ -37,7 +39,9 @@ import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
@@ -55,16 +59,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // variables for adding search functionality
     private static final int REQUEST_CODE_AUTOCOMPLETE = 1;
-    private String geojsonSourceLayerId = "geojsonSourceLayerId";
-    private String symbolIconId = "sumbolIconId"; // Maybe won't be used, should delete?
-    private String redMarker = "redMarker";
-    private String blueMarker = "blueMarker";
+    private final String geojsonSourceLayerId = "geojsonSourceLayerId";
+    private final String symbolIconId = "sumbolIconId"; // Maybe won't be used, should delete?
+    private final String RED_MARKER = "RED_MARKER";
+    private final String BLUE_MARKER = "BLUE_MARKER";
+    private Symbol latestSearchedLocationSymbol; // Will contain symbolOptions for the latest user searched location's symbol
+    private Symbol latestAddedAsStopSymbol; // Will contain symbolOptions for the symbol that was used in the latest stop addition
+    SymbolManager symbolManager; // SymbolManager to add symbol on the map
 
-    // variables for manipulating bottomSheet behavior
+
+    // variables for manipulating bottomSheet
     private View bottomSheet;
     private BottomSheetBehavior<View> bottomSheetBehavior;
-
     private TextView placeNameTextView;
+
+    // variables for manipulating addAsStop button
+    private Button addAsStopButton;
+    private final String ADD_AS_STOP = "Add as stop"; // Should be exactly the same as the text in R.string.add_stop_txt
+    private final String REMOVE_FROM_STOPS = "Remove from stops"; // Should be exactly the same as the text in R.string.remove_stop_txt
+    private TextView currentStopsCounterTextView;
+    private Set<CarmenFeature> setOfStops = new HashSet<>(); // We do not use LinkedHashSet or TreeSet because we don't care about the order
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         placeNameTextView = findViewById(R.id.placeNameTextView);
+        addAsStopButton = findViewById(R.id.StopsButton);
+        currentStopsCounterTextView = findViewById(R.id.currentStopsCounterTextView);
     }
 
     @Override
@@ -107,11 +123,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 initSearchFab(); // Initiates location search
 
                 // Add the symbol layer icon to map and specify a name for each of the markers.
-                style.addImage(redMarker, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.mapbox_marker_icon_default));
-                style.addImage(blueMarker, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.map_default_map_marker));
+                style.addImage(RED_MARKER, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.mapbox_marker_icon_default));
+                style.addImage(BLUE_MARKER, BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.map_default_map_marker));
 
                 // Create an empty GeoJSON source using the empty feature collection
                 setUpSource(style);
+
+                // Initialize symbol manager to add and remove icons on the map
+                initializeSymbolManager(style);
 
                 // Set up a new symbol layer for displaying the searched location's feature coordinates - SEEMS NON FUNCTIONAL, DELETE?
                 //setupLayer(style);
@@ -158,6 +177,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 GeoJsonSource(geojsonSourceLayerId));
     }
 
+    private void initializeSymbolManager (@NonNull Style style) {
+        symbolManager = new SymbolManager (mapView, mapboxMap, style);
+
+        // Set non-data-driven properties
+        symbolManager.setIconAllowOverlap(true);
+        symbolManager.setTextAllowOverlap(true);
+    }
+
     private void setupLayer(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addLayer(new SymbolLayer("SYMBOL_LAYER_ID",
                 geojsonSourceLayerId).withProperties(
@@ -193,38 +220,108 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     .zoom(14)
                                     .build()), 4000);
 
-                    updatePlaceNameInBottomSheet(selectedCarmenFeature);
+                    // Update place name in bottom sheet
+                    placeNameTextView.setText(selectedCarmenFeature.placeName());
+                    // Reveal bottom sheet
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
 
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED); // Reveal bottom sheet
+                    removeSymbolFromMap(latestSearchedLocationSymbol);
+                    latestSearchedLocationSymbol = addSymbolInMap(selectedCarmenFeature, RED_MARKER);
 
-                    addSymbolIconInSelectedLocation(style, selectedCarmenFeature);
+                    refreshStopsButtonState();
+                    manipulateAddAsStopButton(style, selectedCarmenFeature);
                 }
             }
         }
     }
 
-    private void updatePlaceNameInBottomSheet(@NonNull CarmenFeature selectedCarmenFeature) {
-        placeNameTextView.setText(selectedCarmenFeature.placeName());
+    private void removeSymbolFromMap(Symbol symbol) {
+        if (symbol == null) { /*Do nothing*/ }
+        else { symbolManager.delete(symbol); }
     }
 
-    private void addSymbolIconInSelectedLocation(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
-        // Create a SymbolManager to add symbolIcons on map
-        SymbolManager symbolManager = new SymbolManager (mapView, mapboxMap, style);
+    private Symbol addSymbolInMap(@NonNull CarmenFeature selectedCarmenFeature, @NonNull String iconImageString) {
+        // This class uses "symbolManager" and requires it to be initialized.
 
-        // Set non-data-driven properties
-        symbolManager.setIconAllowOverlap(true);
-        symbolManager.setTextAllowOverlap(true);
+        // Specify symbol size for the markers
+        float iconSize;
+        switch (iconImageString) {
+            case BLUE_MARKER:
+                iconSize = 0.74f; break;
+            default:
+                iconSize = 1.0f;
+        }
 
         // Create a symbol at the specified location.
         SymbolOptions symbolOptions = new SymbolOptions()
                 //.withLatLng(new LatLng(6.687337, 0.381457)) //for educational purposes - DELETE AFTERWARDS
                 .withLatLng(new LatLng(((Point) selectedCarmenFeature.geometry()).latitude(),
                         ((Point) selectedCarmenFeature.geometry()).longitude()))
-                .withIconImage(redMarker)
-                .withIconSize(1.0f);
+                .withIconImage(iconImageString)
+                .withIconSize(iconSize);
 
         // Use the manager to draw the symbol
-        symbolManager.create(symbolOptions);
+        Symbol createdSymbol = symbolManager.create(symbolOptions);
+        return createdSymbol;
+    }
+
+    private void refreshStopsButtonState() {
+        // So far this only changes the text of the button, later it would be good have a different way of understanding the state of the button
+        // eg. have a variable for the button state, and if it should be at the "initial" state then text should be "add as stop",
+        // if it should be at the "stop selection" state then text should be "remove from stop".
+        addAsStopButton.setText(ADD_AS_STOP);
+    }
+
+    private void manipulateAddAsStopButton(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
+        addAsStopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Button button = (Button) v;
+                String buttonText = (String) button.getText();
+
+                switch (buttonText) {
+                    case ADD_AS_STOP:
+                        // Add the selectedCarmenFeature in the HashSet
+                        boolean stopAddedInSet = setOfStops.add(selectedCarmenFeature); // If element already exists in Set it will not be added
+
+                        if (stopAddedInSet) {
+                            // Update the current stops counter
+                            currentStopsCounterTextView.setText(String.valueOf(setOfStops.size()));
+
+                            // Remove the red marker from that location
+                            removeSymbolFromMap(latestSearchedLocationSymbol);
+
+                            // Place a blue marker on that location
+                            latestAddedAsStopSymbol = addSymbolInMap(selectedCarmenFeature, BLUE_MARKER);
+
+                            // Change the button's text
+                            button.setText(REMOVE_FROM_STOPS);
+                        }
+                        break;
+                    case REMOVE_FROM_STOPS:
+                        // Remove the selectedCarmenFeature from the HashSet
+                        boolean stopRemovedFromSet = setOfStops.remove(selectedCarmenFeature);
+
+                        if (stopRemovedFromSet) {
+                            // Update the current stops counter
+                            currentStopsCounterTextView.setText(String.valueOf(setOfStops.size()));
+
+                            // Remove the marker from that location
+                            removeSymbolFromMap(latestAddedAsStopSymbol); // !!!! This need to be changed !!!!!!! Ama thelei o xrhsths na clickarei se location kai
+                                                                            // na to svhseis tha prepei na pairneis ta symbol options tou kai na ta dineis edw, den einai lush
+                                                                            // na pairneis panta to "latestAddedAsStopSymbol"
+
+                            // Change the button's text
+                            button.setText(ADD_AS_STOP);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+
+            }
+        });
     }
 
     @Override
