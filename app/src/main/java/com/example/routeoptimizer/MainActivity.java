@@ -31,6 +31,7 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.plugins.annotation.OnSymbolClickListener;
 import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
@@ -39,9 +40,8 @@ import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
@@ -72,15 +72,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View bottomSheet;
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private TextView placeNameTextView;
+    private BottomSheetEntity bottomSheetEntity;  // <-- Mallon tha krathseis mono auto!
 
     // variables for manipulating addAsStop button
     private Button addAsStopButton;
     private final String ADD_AS_STOP = "Add as stop"; // Should be exactly the same as the text in R.string.add_stop_txt
     private final String REMOVE_FROM_STOPS = "Remove from stops"; // Should be exactly the same as the text in R.string.remove_stop_txt
-    private final int ADD_NEW_STOP_STATE = 0;
-    private final int REMOVE_A_STOP_STATE = 1;
+    private enum StopsButtonState {
+        ADD_NEW_STOP,
+        REMOVE_A_STOP
+    }
     private TextView currentStopsCounterTextView;
-    private Set<CarmenFeature> setOfStops = new HashSet<>(); // We do not use LinkedHashSet or TreeSet because we don't care about the order
+    private HashMap<Point, CarmenFeature> stopsHashMap= new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         setContentView(R.layout.activity_main);
 
-        mapView = (MapView) findViewById(R.id.mapView);
+        mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
@@ -113,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         placeNameTextView = findViewById(R.id.placeNameTextView);
         addAsStopButton = findViewById(R.id.StopsButton);
         currentStopsCounterTextView = findViewById(R.id.currentStopsCounterTextView);
+
+        bottomSheetEntity = BottomSheetEntity.getInstance();
+        bottomSheetEntity.setPlaceNameReference(findViewById(R.id.placeNameTextView));
     }
 
     @Override
@@ -136,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Set up a new symbol layer for displaying the searched location's feature coordinates - SEEMS NON FUNCTIONAL, DELETE?
                 //setupLayer(style);
+
+                addAnnotationClickListener();
             }
         });
     }
@@ -195,12 +203,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ));
     }
 
+    /**
+     * Adds a listener on <b>every</b> symbol (also called <i>annotation</i>) that will be created.
+     */
+    private void addAnnotationClickListener() {
+        symbolManager.addClickListener(new OnSymbolClickListener() {
+            @Override
+            public boolean onAnnotationClick(Symbol symbol) {
+                String placeName = getPlaceNameFromGeometry(symbol.getGeometry());
+
+                // Update place name in bottom sheet
+                //placeNameTextView.setText(placeName);
+                bottomSheetEntity.updatePlaceNameText(placeName);
+
+                // Reveal bottom sheet. Will work even if it is already in "STATE_EXPANDED"
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+                return true;
+            }
+        });
+    }
+
+    private String getPlaceNameFromGeometry(Point point) {
+        CarmenFeature carmenFeatureOfPoint = stopsHashMap.get(point);
+        return carmenFeatureOfPoint.placeName();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CODE_AUTOCOMPLETE) {
             // Retrieve selected location's CarmenFeature
             CarmenFeature selectedCarmenFeature = PlaceAutocomplete.getPlace(data);
+            Point selectedCarmenFeatureGeometry = (Point) selectedCarmenFeature.geometry();
 
             // Create a new FeatureCollection and add a new Feature to it using selectedCarmenFeature above.
             // Then retrieve and update the source designated for showing a selected location's symbol layer icon.
@@ -230,22 +265,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     removeSymbolFromMap(latestSearchedLocationSymbol);
                     latestSearchedLocationSymbol = addSymbolInMap(selectedCarmenFeature, RED_MARKER);
 
-                    changeStateOfStopsButton(ADD_NEW_STOP_STATE);
-                    manipulateAddAsStopButton(style, selectedCarmenFeature);
+                    changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP);
+                    manipulateStopsButton(style, selectedCarmenFeature, selectedCarmenFeatureGeometry);
                 }
             }
         }
     }
 
     private void removeSymbolFromMap(Symbol symbol) {
-        if (symbol == null) { /*Do nothing*/ }
-        else { symbolManager.delete(symbol); }
+        if (symbol != null) {
+            symbolManager.delete(symbol);
+        }
     }
 
     private Symbol addSymbolInMap(@NonNull CarmenFeature selectedCarmenFeature, @NonNull String iconImageString) {
         // This class uses "symbolManager" and requires it to be initialized.
 
-        // Specify symbol size for the markers
+        // Specify symbol size for the markers, to make them have aprox. the same size
         float iconSize;
         switch (iconImageString) {
             case BLUE_MARKER:
@@ -267,15 +303,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return createdSymbol;
     }
 
-    private void changeStateOfStopsButton(int state) {
-        // So far this only changes the text of the button, later it would be good have a different way of understanding the state of the button
-        // eg. have a variable for the button state, and if it should be at the "initial" state then text should be "add as stop",
-        // if it should be at the "stop selection" state then text should be "remove from stop".
-        if (state == ADD_NEW_STOP_STATE) { addAsStopButton.setText(ADD_AS_STOP); }
-        if (state == REMOVE_A_STOP_STATE) { addAsStopButton.setText(REMOVE_FROM_STOPS); }
+    private void changeStateOfStopsButton(StopsButtonState state) {
+        // So far this method only changes the text of the button
+        if (state == StopsButtonState.ADD_NEW_STOP) { addAsStopButton.setText(ADD_AS_STOP); }
+        if (state == StopsButtonState.REMOVE_A_STOP) { addAsStopButton.setText(REMOVE_FROM_STOPS); }
     }
 
-    private void manipulateAddAsStopButton(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature) {
+    private void manipulateStopsButton(@NonNull Style style, @NonNull CarmenFeature selectedCarmenFeature, @NonNull Point selectedCarmenFeatureGeometry) {
         addAsStopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -284,39 +318,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 switch (buttonText) {
                     case ADD_AS_STOP:
-                        // Add the selectedCarmenFeature in the HashSet
-                        boolean stopAddedInSet = setOfStops.add(selectedCarmenFeature); // If element already exists in Set it will not be added
+                        // Add the selectedCarmenFeature in the HashMap!
+                        stopsHashMap.put(selectedCarmenFeatureGeometry, selectedCarmenFeature);
 
-                        if (stopAddedInSet) {
-                            // Update the current stops counter
-                            currentStopsCounterTextView.setText(String.valueOf(setOfStops.size()));
+                        // Update the current stops counter
+                        currentStopsCounterTextView.setText(String.valueOf(stopsHashMap.size()));
 
-                            // Remove the red marker from that location
-                            removeSymbolFromMap(latestSearchedLocationSymbol);
+                        // Remove the red marker from that location
+                        removeSymbolFromMap(latestSearchedLocationSymbol);
 
-                            // Place a blue marker on that location
-                            latestAddedAsStopSymbol = addSymbolInMap(selectedCarmenFeature, BLUE_MARKER);
+                        // Place a blue marker on that location
+                        latestAddedAsStopSymbol = addSymbolInMap(selectedCarmenFeature, BLUE_MARKER);
 
-                            // Change the button's text
-                            changeStateOfStopsButton(REMOVE_A_STOP_STATE);
-                        }
+                        // Change the button's text
+                        changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP);
+
+                        // Add a listener on the stop symbol (blue marker) for future stop manipulation
+                        //addClickListenerOnStop(latestAddedAsStopSymbol, selectedCarmenFeature);   <--- Probably should be deleted
                         break;
                     case REMOVE_FROM_STOPS:
-                        // Remove the selectedCarmenFeature from the HashSet
-                        boolean stopRemovedFromSet = setOfStops.remove(selectedCarmenFeature);
+                        // Remove the selectedCarmenFeature from the HashMap!
+                        System.out.println("<---- Will remove element from stopsHashMap with place name: "+stopsHashMap.get(selectedCarmenFeatureGeometry).placeName()+"---->");
+                        stopsHashMap.remove(selectedCarmenFeatureGeometry);
 
-                        if (stopRemovedFromSet) {
-                            // Update the current stops counter
-                            currentStopsCounterTextView.setText(String.valueOf(setOfStops.size()));
+                        // Update the current stops counter
+                        currentStopsCounterTextView.setText(String.valueOf(stopsHashMap.size()));
 
-                            // Remove the marker from that location
-                            removeSymbolFromMap(latestAddedAsStopSymbol); // !!!! This need to be changed !!!!!!! Ama thelei o xrhsths na clickarei se location kai
-                                                                            // na to svhseis tha prepei na pairneis ta symbol options tou kai na ta dineis edw, den einai lush
-                                                                            // na pairneis panta to "latestAddedAsStopSymbol"
+                        // Remove the marker from that location
+                        removeSymbolFromMap(latestAddedAsStopSymbol); // !!!! This need to be changed !!!!!!! Ama thelei o xrhsths na clickarei se location kai
+                                                                        // na to svhseis tha prepei na pairneis ta symbol options tou kai na ta dineis edw, den einai lush
+                                                                        // na pairneis panta to "latestAddedAsStopSymbol"
 
-                            // Change the button's text
-                            changeStateOfStopsButton(ADD_NEW_STOP_STATE);
-                        }
+                        // Change the button's text
+                        changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP);
                         break;
                     default:
                         break;
