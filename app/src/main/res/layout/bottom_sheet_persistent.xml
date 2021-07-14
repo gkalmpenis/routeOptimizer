@@ -8,7 +8,7 @@
     android:background="@drawable/rounded_corners"
     android:paddingBottom="8dp"
     app:behavior_hideable="true"
-    app:behavior_peekHeight="16dp"
+    app:behavior_peekHeight="28dp"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
 
@@ -61,7 +61,7 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
-        android:id="@+id/StopsButton"
+        android:id="@+id/stopsButton"
         style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -75,18 +75,18 @@
         app:layout_constraintTop_toBottomOf="@+id/placeNameTextView" />
 
     <TextView
-        android:id="@+id/currentStopsButton"
+        android:id="@+id/currentStopsTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginLeft="24dp"
         android:text="@string/current_stops_txt"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="@+id/StopsButton"
+        app:layout_constraintBottom_toBottomOf="@+id/stopsButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/StopsButton"
-        app:layout_constraintTop_toTopOf="@+id/StopsButton" />
+        app:layout_constraintStart_toEndOf="@+id/stopsButton"
+        app:layout_constraintTop_toTopOf="@+id/stopsButton" />
 
     <TextView
         android:id="@+id/currentStopsCounterTextView"
@@ -96,10 +96,10 @@
         android:layout_marginLeft="8dp"
         android:text="@string/current_stops_counter_txt"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="@+id/currentStopsButton"
+        app:layout_constraintBottom_toBottomOf="@+id/currentStopsTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/currentStopsButton"
-        app:layout_constraintTop_toTopOf="@+id/currentStopsButton" />
+        app:layout_constraintStart_toEndOf="@+id/currentStopsTextView"
+        app:layout_constraintTop_toTopOf="@+id/currentStopsTextView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
