@@ -431,6 +431,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void onFailure(Call<GeocodingResponse> call, Throwable t) {
                     Timber.e("Geocoding Failure: %s", t.getMessage());
+
+                    // Print a toast message
+                    mapboxMap.getStyle(new Style.OnStyleLoaded() {
+                        @Override
+                        public void onStyleLoaded(@NonNull Style style) {
+                            if (style != null) {
+                                Toast.makeText(MainActivity.this, "Error requesting geocoding information, check your internet connection", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
                 }
             });
         } catch (ServicesException servicesException) {
