@@ -120,6 +120,7 @@ public class BottomSheetManager {
 
                         // Update the marker in that location
                         symbolsManagerInterface.updateSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol());
+                        symbolsManagerInterface.changeIconSize(symbolsManagerInterface.getLatestSearchedSymbol(), SymbolsManagerInterface.BLUE_MARKER_EXPANDED_SIZE);
 
                         // Change the stopsButton's text
                         changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP);

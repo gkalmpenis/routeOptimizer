@@ -2,6 +2,7 @@ package com.example.routeoptimizer;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.collection.LongSparseArray;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -71,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String symbolIconId = "symbolIconId"; // Maybe won't be used, should delete?
     private final String RED_MARKER = "RED_MARKER"; // Corresponds to locations that are searched but not added in stopsHashMap
     private final String BLUE_MARKER = "BLUE_MARKER"; // Corresponds to locations added in stopsHashMap
+    //private final float RED_MARKER_ORIGINAL_SIZE = 1.0f;
+    //private final float BLUE_MARKER_ORIGINAL_SIZE = 0.74f;
+    //private final float BLUE_MARKER_EXPANDED_SIZE = 0.9f;
     private Symbol latestSearchedLocationSymbol; // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private SymbolManager symbolManager; // SymbolManager to add/remove symbols on the map
 
@@ -201,28 +205,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         symbolManager.addClickListener(new OnSymbolClickListener() {
             @Override
             public boolean onAnnotationClick(Symbol symbol) {
-                deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
+                // Currently there is functionality only for clicking blue markers, clicking on
+                // a red one will have no effect.
+                if (symbol.getIconImage().equals(BLUE_MARKER)) {
+                    // If the previously displayed symbol was red, delete it
+                    deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
 
-                latestSearchedLocationSymbol = symbol;
+                    resetIconSizeInBlueMarkers();
 
-                CarmenFeature carmenFeatureOfSelectedSymbol = stopsHashMap.get(symbol.getGeometry()); // Get CarmenFeature from geometry
+                    // Expand the symbol size of the currently displayed blue marker
+                    changeIconSize(symbol, BLUE_MARKER_EXPANDED_SIZE);
 
-                bottomSheetManager.setCurrentCarmenFeature(carmenFeatureOfSelectedSymbol, symbol.getGeometry());
+                    // The new symbol now becomes the latest one we searched
+                    latestSearchedLocationSymbol = symbol;
 
-                // Update place name in bottom sheet
-                bottomSheetManager.changePlaceNameText(carmenFeatureOfSelectedSymbol.placeName());
+                    // Get CarmenFeature from geometry. The symbol was blue so the location exists in stopsHashMap
+                    CarmenFeature carmenFeatureOfSelectedSymbol = stopsHashMap.get(symbol.getGeometry());
 
-                // Update the text of stopsButton
-                bottomSheetManager.refreshStateOfStopsButton();
+                    bottomSheetManager.setCurrentCarmenFeature(carmenFeatureOfSelectedSymbol, symbol.getGeometry());
 
-                // Reveal bottom sheet. Will work even if it is already in "STATE_EXPANDED"
-                bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
+                    // Update place name in bottom sheet
+                    bottomSheetManager.changePlaceNameText(carmenFeatureOfSelectedSymbol.placeName());
 
+                    // Update the text of stopsButton
+                    bottomSheetManager.refreshStateOfStopsButton();
+
+                    // Reveal bottom sheet. Will work even if it is already in "STATE_EXPANDED"
+                    bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
+                }
                 return true;
             }
         });
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -254,6 +268,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
                     deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
+
+                    // Reset all blue markers to their original size, so they do not look like they are selected
+                    resetIconSizeInBlueMarkers();
 
                     // Create a symbol for that location and set it on the class' appropriate variable
                     latestSearchedLocationSymbol = createSymbolInMap(selectedCarmenFeature, RED_MARKER);
@@ -306,12 +323,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     protected float specifyIconSize (@NonNull String iconImageString) {
         if ( iconImageString.equals(RED_MARKER) ) {
-            return 1.0f;
+            return RED_MARKER_ORIGINAL_SIZE;
         }
         if ( iconImageString.equals(BLUE_MARKER) ) {
-            return 0.74f;
+            return BLUE_MARKER_ORIGINAL_SIZE;
         }
         return 1.0f;
+    }
+
+    @Override
+    public void changeIconSize (@NonNull Symbol symbol, float size) {
+        symbol.setIconSize(size);
+        symbolManager.update(symbol);
+    }
+
+    private void resetIconSizeInBlueMarkers() {
+        Timber.v("resetIconSizeInBlueMarkers() is called");
+        for (int i=0; i < symbolManager.getAnnotations().size(); i++) {
+            Timber.v("Entered loop through all annotations, iteration: %s", i);
+            Symbol currentSymbol = symbolManager.getAnnotations().valueAt(i);
+            if (currentSymbol.getIconImage().equals(BLUE_MARKER)) {
+                changeIconSize(currentSymbol, BLUE_MARKER_ORIGINAL_SIZE);
+                Timber.v("Just changed a blue marker size");
+            }
+        }
     }
 
     /**
@@ -385,17 +420,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             client.enqueueCall(new Callback<GeocodingResponse>() {
                 @Override
-                public void onResponse(Call<GeocodingResponse> call, Response<GeocodingResponse> response) {
+                public void onResponse(@NonNull Call<GeocodingResponse> call, @NonNull Response<GeocodingResponse> response) {
                     if (response.body() != null) {
                         List<CarmenFeature> results = response.body().features();
                         if (results.size() > 0) {
                             // If the geocoder returns a result, we take the first in the list.
                             CarmenFeature feature = results.get(0);
 
-                            Timber.d("Successfully got a geocoding result, place name: " + feature.placeName());
+                            Timber.d("Successfully got a geocoding result, place name: %s", feature.placeName());
 
                             // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
                             deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
+
+                            // Reset all blue markers to their original size, so they do not look like they are selected
+                            resetIconSizeInBlueMarkers();
 
                             // Create a symbol for that location and set it on the class' appropriate variable
                             latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER);
@@ -429,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 @Override
-                public void onFailure(Call<GeocodingResponse> call, Throwable t) {
+                public void onFailure(@NonNull Call<GeocodingResponse> call, @NonNull Throwable t) {
                     Timber.e("Geocoding Failure: %s", t.getMessage());
 
                     // Print a toast message
