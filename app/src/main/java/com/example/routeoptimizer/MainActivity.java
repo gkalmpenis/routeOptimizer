@@ -8,13 +8,18 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.api.geocoding.v5.GeocodingCriteria;
+import com.mapbox.api.geocoding.v5.MapboxGeocoding;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
+import com.mapbox.api.geocoding.v5.models.GeocodingResponse;
+import com.mapbox.core.exceptions.ServicesException;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.Point;
@@ -40,6 +45,11 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.util.HashMap;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import timber.log.Timber;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
@@ -73,6 +83,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize Timber for logging
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
@@ -119,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //setupLayer(style);
 
                 addAnnotationClickListener();
+                addMapLongClickListener();
             }
         });
     }
@@ -341,6 +357,85 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_SHORT).show();
             finish();
+        }
+    }
+
+    private void addMapLongClickListener() {
+        mapboxMap.addOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
+            @Override
+            public boolean onMapLongClick(@NonNull LatLng point) {
+                reverseGeocode(Point.fromLngLat(point.getLongitude(), point.getLatitude()));
+                return true;
+            }
+        });
+    }
+
+    /**
+     * This method is used to reverse geocode where the user has dropped the marker.
+     *
+     * @param point The location to use for the search
+     */
+    private void reverseGeocode(final Point point) {
+        try {
+            MapboxGeocoding client = MapboxGeocoding.builder()
+                    .accessToken(getString(R.string.mapbox_access_token))
+                    .query(Point.fromLngLat(point.longitude(), point.latitude()))
+                    .geocodingTypes(GeocodingCriteria.TYPE_ADDRESS)
+                    .build();
+
+            client.enqueueCall(new Callback<GeocodingResponse>() {
+                @Override
+                public void onResponse(Call<GeocodingResponse> call, Response<GeocodingResponse> response) {
+                    if (response.body() != null) {
+                        List<CarmenFeature> results = response.body().features();
+                        if (results.size() > 0) {
+                            // If the geocoder returns a result, we take the first in the list.
+                            CarmenFeature feature = results.get(0);
+
+                            Timber.d("Successfully got a geocoding result, place name: " + feature.placeName());
+
+                            // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
+                            deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
+
+                            // Create a symbol for that location and set it on the class' appropriate variable
+                            latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER);
+
+                            // Update place name in bottom sheet
+                            bottomSheetManager.changePlaceNameText(feature.placeName());
+
+                            // Notify the bottom sheet about its new currentCarmenFeature
+                            bottomSheetManager.setCurrentCarmenFeature(feature, (Point) feature.geometry());
+
+                            // Refresh the state of bottom sheet's stopsButton
+                            bottomSheetManager.refreshStateOfStopsButton();
+
+                            // Reveal bottom sheet
+                            bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
+
+                        } else {
+                            Timber.i("No results found for the clicked location");
+
+                            // Print a toast message
+                            mapboxMap.getStyle(new Style.OnStyleLoaded() {
+                                @Override
+                                public void onStyleLoaded(@NonNull Style style) {
+                                    if (style != null) {
+                                        Toast.makeText(MainActivity.this, "Could not find results for this location, please try again", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<GeocodingResponse> call, Throwable t) {
+                    Timber.e("Geocoding Failure: %s", t.getMessage());
+                }
+            });
+        } catch (ServicesException servicesException) {
+            Timber.e("Error geocoding: %s", servicesException.toString());
+            servicesException.printStackTrace();
         }
     }
 
