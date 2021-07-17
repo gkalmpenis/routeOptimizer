@@ -2,14 +2,12 @@ package com.example.routeoptimizer;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.collection.LongSparseArray;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -55,7 +53,6 @@ import timber.log.Timber;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 
-//public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMapClickListener, PermissionsListener {
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener, SymbolsManagerInterface {
 
     // variables for adding location layer
@@ -72,9 +69,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String symbolIconId = "symbolIconId"; // Maybe won't be used, should delete?
     private final String RED_MARKER = "RED_MARKER"; // Corresponds to locations that are searched but not added in stopsHashMap
     private final String BLUE_MARKER = "BLUE_MARKER"; // Corresponds to locations added in stopsHashMap
-    //private final float RED_MARKER_ORIGINAL_SIZE = 1.0f;
-    //private final float BLUE_MARKER_ORIGINAL_SIZE = 0.74f;
-    //private final float BLUE_MARKER_EXPANDED_SIZE = 0.9f;
     private Symbol latestSearchedLocationSymbol; // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private SymbolManager symbolManager; // SymbolManager to add/remove symbols on the map
 
@@ -244,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CODE_AUTOCOMPLETE) {
             // Retrieve selected location's CarmenFeature
             CarmenFeature selectedCarmenFeature = PlaceAutocomplete.getPlace(data);
-            Point selectedCarmenFeatureGeometry = (Point) selectedCarmenFeature.geometry();
+//            Point selectedCarmenFeatureGeometry = (Point) selectedCarmenFeature.geometry();
 
             // Create a new FeatureCollection and add a new Feature to it using selectedCarmenFeature above.
             // Then retrieve and update the source designated for showing a selected location's symbol layer icon.
@@ -266,26 +260,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     .zoom(14)
                                     .build()), 4000);
 
-                    // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
-                    deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
-
-                    // Reset all blue markers to their original size, so they do not look like they are selected
-                    resetIconSizeInBlueMarkers();
-
-                    // Create a symbol for that location and set it on the class' appropriate variable
-                    latestSearchedLocationSymbol = createSymbolInMap(selectedCarmenFeature, RED_MARKER);
-
-                    // Update place name in bottom sheet
-                    bottomSheetManager.changePlaceNameText(selectedCarmenFeature.placeName());
-
-                    // Notify the bottom sheet about its new currentCarmenFeature
-                    bottomSheetManager.setCurrentCarmenFeature(selectedCarmenFeature, selectedCarmenFeatureGeometry);
-
-                    // Refresh the state of bottom sheet's stopsButton
-                    bottomSheetManager.refreshStateOfStopsButton();
-
-                    // Reveal bottom sheet
-                    bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
+                    performActionsOnSearchResult(selectedCarmenFeature);
                 }
             }
         }
@@ -429,27 +404,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             Timber.d("Successfully got a geocoding result, place name: %s", feature.placeName());
 
-                            // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
-                            deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
-
-                            // Reset all blue markers to their original size, so they do not look like they are selected
-                            resetIconSizeInBlueMarkers();
-
-                            // Create a symbol for that location and set it on the class' appropriate variable
-                            latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER);
-
-                            // Update place name in bottom sheet
-                            bottomSheetManager.changePlaceNameText(feature.placeName());
-
-                            // Notify the bottom sheet about its new currentCarmenFeature
-                            bottomSheetManager.setCurrentCarmenFeature(feature, (Point) feature.geometry());
-
-                            // Refresh the state of bottom sheet's stopsButton
-                            bottomSheetManager.refreshStateOfStopsButton();
-
-                            // Reveal bottom sheet
-                            bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
-
+                            performActionsOnSearchResult(feature);
                         } else {
                             Timber.i("No results found for the clicked location");
 
@@ -485,6 +440,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Timber.e("Error geocoding: %s", servicesException.toString());
             servicesException.printStackTrace();
         }
+    }
+
+    private void performActionsOnSearchResult(CarmenFeature feature) {
+        // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
+        deleteSymbolFromMapIfRed(latestSearchedLocationSymbol);
+
+        // Reset all blue markers to their original size, so they do not look like they are selected
+        resetIconSizeInBlueMarkers();
+
+        // Create a symbol for that location and set it on the class' appropriate variable
+        latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER);
+
+        // Update place name in bottom sheet
+        bottomSheetManager.changePlaceNameText(feature.placeName());
+
+        // Notify the bottom sheet about its new currentCarmenFeature
+        bottomSheetManager.setCurrentCarmenFeature(feature, (Point) feature.geometry());
+
+        // Refresh the state of bottom sheet's stopsButton
+        bottomSheetManager.refreshStateOfStopsButton();
+
+        // Reveal bottom sheet
+        bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
     }
 
     @Override
