@@ -65,14 +65,16 @@
         style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAllCaps="false"
+        android:layout_marginTop="8dp"
         android:text="@string/add_stop_txt"
+        android:textAllCaps="false"
         app:icon="@drawable/ic_add_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.25"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/placeNameTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/placeNameTextView"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/currentStopsTextView"
@@ -101,5 +103,21 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/currentStopsTextView"
         app:layout_constraintTop_toTopOf="@+id/currentStopsTextView" />
+
+    <Button
+        android:id="@+id/optimizeButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/optimize_txt"
+        android:textAllCaps="false"
+        android:visibility="visible"
+        app:backgroundTint="@color/mapbox_plugins_bright_blue"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stopsButton"
+        app:layout_constraintVertical_bias="0.0" />
+    <!-- It will be hidden (programmatically) by default -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

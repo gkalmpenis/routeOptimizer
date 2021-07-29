@@ -42,6 +42,7 @@ public class BottomSheetManager {
     private TextView placeNameTextView;
     private Button stopsButton;
     private TextView currentStopsCounterTextView;
+    private Button optimizeButton;
     private CarmenFeature currentCarmenFeature;
     private Point currentCarmenFeatureGeometry;
 
@@ -58,6 +59,7 @@ public class BottomSheetManager {
     protected void setPlaceNameReference(TextView placeNameTextView) { this.placeNameTextView = placeNameTextView; }
     protected void setStopsButtonReference(Button stopsButton) { this.stopsButton = stopsButton; }
     protected void setCurrentStopsCounterReference(TextView currentStopsCounterTextView) { this.currentStopsCounterTextView = currentStopsCounterTextView; }
+    protected void setOptimizeButtonReference(Button optimizeButton) { this.optimizeButton = optimizeButton; }
     protected void setSymbolsManagerInterface(SymbolsManagerInterface symbolsManagerInterface) { this.symbolsManagerInterface = symbolsManagerInterface; }
 
     /**
@@ -118,6 +120,8 @@ public class BottomSheetManager {
                         // Update the current stops counter
                         currentStopsCounterTextView.setText(String.valueOf(MainActivity.stopsHashMap.size()));
 
+                        decideOptimizeButtonVisibility();
+
                         // Update the marker in that location
                         symbolsManagerInterface.updateSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol());
                         symbolsManagerInterface.changeIconSize(symbolsManagerInterface.getLatestSearchedSymbol(), SymbolsManagerInterface.BLUE_MARKER_EXPANDED_SIZE);
@@ -132,6 +136,8 @@ public class BottomSheetManager {
                         // Update the current stops counter
                         currentStopsCounterTextView.setText(String.valueOf(MainActivity.stopsHashMap.size()));
 
+                        decideOptimizeButtonVisibility();
+
                         // Update the marker in that location
                         symbolsManagerInterface.updateSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol());
 
@@ -143,5 +149,13 @@ public class BottomSheetManager {
                 }
             }
         });
+    }
+
+    protected void decideOptimizeButtonVisibility() {
+        if ( MainActivity.stopsHashMap.size() < 2 ) {
+            optimizeButton.setVisibility(View.GONE);
+        } else {
+            optimizeButton.setVisibility(View.VISIBLE);
+        }
     }
 }

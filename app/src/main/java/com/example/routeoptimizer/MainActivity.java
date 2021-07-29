@@ -103,8 +103,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetManager.setPlaceNameReference(findViewById(R.id.placeNameTextView));
         bottomSheetManager.setStopsButtonReference(findViewById(R.id.stopsButton));
         bottomSheetManager.setCurrentStopsCounterReference(findViewById(R.id.currentStopsCounterTextView));
+        bottomSheetManager.setOptimizeButtonReference(findViewById(R.id.optimizeButton));
 
         bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN); // Do not reveal bottom sheet on creation of the application.
+        bottomSheetManager.decideOptimizeButtonVisibility(); // Should not be visible until stopsHashMap contains at least 2 stops.
         bottomSheetManager.setOnClickListener();
         bottomSheetManager.addStopsButtonOnClickListener();
     }
@@ -412,9 +414,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mapboxMap.getStyle(new Style.OnStyleLoaded() {
                                 @Override
                                 public void onStyleLoaded(@NonNull Style style) {
-                                    if (style != null) {
-                                        Toast.makeText(MainActivity.this, "Could not find results for this location, please try again", Toast.LENGTH_SHORT).show();
-                                    }
+                                    Toast.makeText(MainActivity.this, "Could not find results for this location, please try again", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -429,9 +429,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mapboxMap.getStyle(new Style.OnStyleLoaded() {
                         @Override
                         public void onStyleLoaded(@NonNull Style style) {
-                            if (style != null) {
-                                Toast.makeText(MainActivity.this, "Error requesting geocoding information, check your internet connection", Toast.LENGTH_SHORT).show();
-                            }
+                            Toast.makeText(MainActivity.this, "Error requesting geocoding information, check your internet connection", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
