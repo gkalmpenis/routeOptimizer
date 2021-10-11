@@ -42,7 +42,8 @@ import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import retrofit2.Call;
@@ -53,7 +54,7 @@ import timber.log.Timber;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener, SymbolsManagerInterface {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener, SymbolsManagerInterface, RouteOptimizationInterface {
 
     // variables for adding location layer
     private MapView mapView;
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BottomSheetManager bottomSheetManager;
 
     // HashMap that will contain locations that user adds as stop
-    protected static HashMap<Point, CarmenFeature> stopsHashMap = new HashMap<>();
+    protected static LinkedHashMap<Point, CarmenFeature> stopsHashMap = new LinkedHashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetManager.setStopsButtonReference(findViewById(R.id.stopsButton));
         bottomSheetManager.setCurrentStopsCounterReference(findViewById(R.id.currentStopsCounterTextView));
         bottomSheetManager.setOptimizeButtonReference(findViewById(R.id.optimizeButton));
+        bottomSheetManager.setRouteOptimizationInterface(this);
 
         bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN); // Do not reveal bottom sheet on creation of the application.
         bottomSheetManager.decideOptimizeButtonVisibility(); // Should not be visible until stopsHashMap contains at least 2 stops.
@@ -461,6 +463,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Reveal bottom sheet
         bottomSheetManager.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED);
+    }
+
+    /**
+     * This method converts each <i>CarmenFeature</i> in <b>stopsHashMap</b> to a <i>Point</i>.
+     *
+     * @return A list of <i>Point</i> objects that correspond to each element in <b>stopsHashMap</b>
+     */
+    @Override
+    public List<Point> convertStopsToPoints() {
+        List<Point> coordinates = new ArrayList<>();
+
+        for (Point point : stopsHashMap.keySet()) {
+            coordinates.add(point);
+        }
+
+        return coordinates;
     }
 
     @Override

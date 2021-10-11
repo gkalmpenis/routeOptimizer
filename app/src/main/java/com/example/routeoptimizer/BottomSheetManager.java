@@ -1,5 +1,6 @@
 package com.example.routeoptimizer;
 
+import android.content.res.Resources;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -7,8 +8,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
+import com.mapbox.api.optimization.v1.MapboxOptimization;
 import com.mapbox.geojson.Point;
+import com.mapbox.mapboxsdk.Mapbox;
+
+import java.util.List;
 
 public class BottomSheetManager {
     /*
@@ -51,6 +57,8 @@ public class BottomSheetManager {
     private final String REMOVE_FROM_STOPS = "Remove from stops"; // Should be exactly the same as the text in R.string.remove_stop_txt
 
     private SymbolsManagerInterface symbolsManagerInterface; // To perform create/update/delete actions on map symbols
+    private RouteOptimizationInterface routeOptimizationInterface;
+    private MapboxOptimization optimizedClient;
 
     /* Methods protected by singleton-ness */
     protected void setBottomSheetReference(View bottomSheet) { this.bottomSheet = bottomSheet; }
@@ -61,6 +69,7 @@ public class BottomSheetManager {
     protected void setCurrentStopsCounterReference(TextView currentStopsCounterTextView) { this.currentStopsCounterTextView = currentStopsCounterTextView; }
     protected void setOptimizeButtonReference(Button optimizeButton) { this.optimizeButton = optimizeButton; }
     protected void setSymbolsManagerInterface(SymbolsManagerInterface symbolsManagerInterface) { this.symbolsManagerInterface = symbolsManagerInterface; }
+    protected void setRouteOptimizationInterface(RouteOptimizationInterface routeOptimizationInterface) { this.routeOptimizationInterface = routeOptimizationInterface; }
 
     /**
      * Adds an onClick listener that will show/hide the bottomSheet when user clicks anywhere on it
@@ -157,5 +166,28 @@ public class BottomSheetManager {
         } else {
             optimizeButton.setVisibility(View.VISIBLE);
         }
+    }
+
+    protected void addOptimizeButtonOnClickListener() {
+        optimizeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Point> coordinates = routeOptimizationInterface.convertStopsToPoints();
+//                Point firstPoint = coordinates.get(0);                      // The list of coordinates has at least two items because "optimizeButton" appears after two items have been inserted in stopsHashMap,
+//                Point lastPoint = coordinates.get(coordinates.size() - 1);  // so we can safely obtain a firstPoint and lastPoint from them.
+
+                // Build the optimized route
+                optimizedClient = MapboxOptimization.builder()
+                        .source(DirectionsCriteria.SOURCE_FIRST)
+                        .destination(DirectionsCriteria.DESTINATION_LAST)
+                        .coordinates(coordinates)
+                        .overview(DirectionsCriteria.OVERVIEW_FULL)
+                        .profile(DirectionsCriteria.PROFILE_DRIVING)
+                        .accessToken(Resources.getSystem().getString(R.string.mapbox_access_token))
+                        .build();
+
+                //sunexizeis edw!
+            }
+        });
     }
 }
