@@ -4,6 +4,7 @@ import android.content.res.Resources;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -15,6 +16,8 @@ import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 
 import java.util.List;
+
+import timber.log.Timber;
 
 public class BottomSheetManager {
     /*
@@ -172,6 +175,9 @@ public class BottomSheetManager {
         optimizeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if ( MainActivity.stopsHashMap.size() > 12 ) {
+                    Toast.makeText(bottomSheet.getContext(), R.string.only_twelve_stops_allowed, Toast.LENGTH_LONG).show();
+                }
                 List<Point> coordinates = routeOptimizationInterface.convertStopsToPoints();
 //                Point firstPoint = coordinates.get(0);                      // The list of coordinates has at least two items because "optimizeButton" appears after two items have been inserted in stopsHashMap,
 //                Point lastPoint = coordinates.get(coordinates.size() - 1);  // so we can safely obtain a firstPoint and lastPoint from them.
@@ -183,10 +189,9 @@ public class BottomSheetManager {
                         .coordinates(coordinates)
                         .overview(DirectionsCriteria.OVERVIEW_FULL)
                         .profile(DirectionsCriteria.PROFILE_DRIVING)
-                        .accessToken(Resources.getSystem().getString(R.string.mapbox_access_token))
+                        .accessToken(bottomSheet.getResources().getString(R.string.mapbox_access_token))
                         .build();
 
-                //sunexizeis edw!
             }
         });
     }

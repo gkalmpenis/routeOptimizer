@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         bottomSheetManager.decideOptimizeButtonVisibility(); // Should not be visible until stopsHashMap contains at least 2 stops.
         bottomSheetManager.setOnClickListener();
         bottomSheetManager.addStopsButtonOnClickListener();
+        bottomSheetManager.addOptimizeButtonOnClickListener();
     }
 
     @Override

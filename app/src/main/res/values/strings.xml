@@ -10,4 +10,5 @@
     <string name="current_stops_txt">Current stops:</string>
     <string name="current_stops_counter_txt">0</string>
     <string name="optimize_txt">Optimize</string>
+    <string name="only_twelve_stops_allowed">Only a maximum of 12 stops allowed!</string>
 </resources>
