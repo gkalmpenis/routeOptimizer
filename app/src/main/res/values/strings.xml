@@ -11,4 +11,7 @@
     <string name="current_stops_counter_txt">0</string>
     <string name="optimize_txt">Optimize</string>
     <string name="only_twelve_stops_allowed">Only a maximum of 12 stops allowed!</string>
+    <string name="no_success">No routes found, make sure you set the right user and access token</string>
+    <string name="successful_but_no_routes">No routes found for these points</string>
+    <string name="null_in_response">%1$s is null</string>
 </resources>

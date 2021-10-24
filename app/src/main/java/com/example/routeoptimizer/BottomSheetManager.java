@@ -10,13 +10,18 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mapbox.api.directions.v5.DirectionsCriteria;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.api.optimization.v1.MapboxOptimization;
+import com.mapbox.api.optimization.v1.models.OptimizationResponse;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import timber.log.Timber;
 
 public class BottomSheetManager {
@@ -54,6 +59,7 @@ public class BottomSheetManager {
     private Button optimizeButton;
     private CarmenFeature currentCarmenFeature;
     private Point currentCarmenFeatureGeometry;
+    private DirectionsRoute optimizedRoute;
 
     protected enum StopsButtonState { ADD_NEW_STOP, REMOVE_A_STOP }
     private final String ADD_AS_STOP = "Add as stop"; // Should be exactly the same as the text in R.string.add_stop_txt
@@ -176,11 +182,15 @@ public class BottomSheetManager {
             @Override
             public void onClick(View v) {
                 if ( MainActivity.stopsHashMap.size() > 12 ) {
+                    // TODO: This doesn't work if it is the 2nd+ time we click "optimize", provide a fix.
+                    // Maybe because onClick listener is implemented only one time?
                     Toast.makeText(bottomSheet.getContext(), R.string.only_twelve_stops_allowed, Toast.LENGTH_LONG).show();
                 }
                 List<Point> coordinates = routeOptimizationInterface.convertStopsToPoints();
 //                Point firstPoint = coordinates.get(0);                      // The list of coordinates has at least two items because "optimizeButton" appears after two items have been inserted in stopsHashMap,
 //                Point lastPoint = coordinates.get(coordinates.size() - 1);  // so we can safely obtain a firstPoint and lastPoint from them.
+
+                Timber.d("----- BEFORE BUILD ------");
 
                 // Build the optimized route
                 optimizedClient = MapboxOptimization.builder()
@@ -192,6 +202,47 @@ public class BottomSheetManager {
                         .accessToken(bottomSheet.getResources().getString(R.string.mapbox_access_token))
                         .build();
 
+                Timber.d("----- AFTER BUILD ------");
+
+                optimizedClient.enqueueCall(new Callback<OptimizationResponse>() {
+                    @Override
+                    public void onResponse(Call<OptimizationResponse> call, Response<OptimizationResponse> response) {
+                        Timber.d("----- INSIDE onResponse ------");
+                        if (!response.isSuccessful()) {
+                            Timber.d("----- 1. ------");
+                            Timber.d(bottomSheet.getResources().getString(R.string.no_success));
+                            Toast.makeText(bottomSheet.getContext(), bottomSheet.getResources().getString(R.string.no_success), Toast.LENGTH_LONG).show();
+                        } else {
+                            if (response.body() != null) {
+                                Timber.d("----- 2. ------");
+                                List<DirectionsRoute> routes = response.body().trips();
+                                if (routes != null) {
+                                    Timber.d("----- 3. ------");
+                                    if (routes.isEmpty()) {
+                                        Timber.d("----- 4. ------");
+                                        Timber.d("%s size = %s", bottomSheet.getResources().getString(R.string.successful_but_no_routes), routes.size());
+                                        Toast.makeText(bottomSheet.getContext(), bottomSheet.getResources().getString(R.string.successful_but_no_routes), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Timber.d("----- 5. ------");
+                                        // Get most optimized route from API response
+                                        optimizedRoute = routes.get(0);
+                                        Timber.d("----- BEFORE DRAW ------");
+                                        routeOptimizationInterface.drawOptimizedRoute(optimizedRoute);
+                                    }
+                                } else {
+                                    Timber.d("----- 6. ------");
+                                    Timber.d("List of routes in the response is null");
+                                    Toast.makeText(bottomSheet.getContext(), String.format(bottomSheet.getResources().getString(R.string.null_in_response), "The Optimization API response's body"), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<OptimizationResponse> call, Throwable t) {
+                        Timber.d("Error: %s", t.getMessage());
+                    }
+                });
             }
         });
     }

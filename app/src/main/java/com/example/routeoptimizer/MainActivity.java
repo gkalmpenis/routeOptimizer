@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.api.geocoding.v5.GeocodingCriteria;
 import com.mapbox.api.geocoding.v5.MapboxGeocoding;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
@@ -21,6 +22,7 @@ import com.mapbox.api.geocoding.v5.models.GeocodingResponse;
 import com.mapbox.core.exceptions.ServicesException;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -39,6 +41,7 @@ import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
+import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
@@ -51,8 +54,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 
+import static com.mapbox.core.constants.Constants.PRECISION_6;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener, SymbolsManagerInterface, RouteOptimizationInterface {
 
@@ -70,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String symbolIconId = "symbolIconId"; // Maybe won't be used, should delete?
     private final String RED_MARKER = "RED_MARKER"; // Corresponds to locations that are searched but not added in stopsHashMap
     private final String BLUE_MARKER = "BLUE_MARKER"; // Corresponds to locations added in stopsHashMap
+    private static final String TEAL_COLOR = "#23D2BE"; // For optimized route's line
+    private static final float POLYLINE_WIDTH = 5; // For optimized route's line
     private Symbol latestSearchedLocationSymbol; // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private SymbolManager symbolManager; // SymbolManager to add/remove symbols on the map
 
@@ -133,8 +142,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Initialize symbol manager to add and remove icons on the map
                 initializeSymbolManager(style);
 
-                // Set up a new symbol layer for displaying the searched location's feature coordinates - SEEMS NON FUNCTIONAL, DELETE?
-                //setupLayer(style);
+                // Set up a layer to display the Symbols on the map
+//                initSymbolLayer(style);
+
+                // Set up a layer to display the optimized route's line
+                initOptimizedRouteLineLayer(style);
 
                 addAnnotationClickListener();
                 addMapLongClickListener();
@@ -189,12 +201,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         symbolManager.setTextAllowOverlap(true);
     }
 
-    private void setupLayer(@NonNull Style loadedMapStyle) {
+    private void initSymbolLayer(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addLayer(new SymbolLayer("SYMBOL_LAYER_ID",
                 geojsonSourceLayerId).withProperties(
                         iconImage(symbolIconId),
+                        iconAllowOverlap(true),
                         iconOffset(new Float[] {0f, -8f})
         ));
+    }
+
+    private void initOptimizedRouteLineLayer(@NonNull Style loadedMapStyle) {
+        loadedMapStyle.addSource(new GeoJsonSource("optimized-route-source-id"));
+        loadedMapStyle.addLayerBelow(new LineLayer("optimized-route-layer-id", "optimized-route-source-id")
+                .withProperties(
+                        lineColor(Color.parseColor(TEAL_COLOR)),
+                        lineWidth(POLYLINE_WIDTH)
+                ), symbolManager.getLayerId());
     }
 
     /**
@@ -480,6 +502,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         return coordinates;
+    }
+
+    /**
+     * This method will draw the optimized route (as a line) on the map.
+     *
+     */
+    @Override
+    public void drawOptimizedRoute(DirectionsRoute route) {
+        Timber.d("----- INSIDE drawOptimizedRoute ------");
+        mapboxMap.getStyle(new Style.OnStyleLoaded() {
+            @Override
+            public void onStyleLoaded(@NonNull Style style) {
+                Timber.d("----- INSIDE onStyleLoaded ------");
+                GeoJsonSource optimizedLineSource = style.getSourceAs("optimized-route-source-id");
+
+                Timber.d("----- before if ------");
+                if (optimizedLineSource != null) {
+                    Timber.d("----- inside if ------");
+                    optimizedLineSource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(LineString.fromPolyline(route.geometry(), PRECISION_6))));
+                }
+            }
+        });
     }
 
     @Override
