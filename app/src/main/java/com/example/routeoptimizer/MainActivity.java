@@ -19,6 +19,7 @@ import com.mapbox.api.geocoding.v5.GeocodingCriteria;
 import com.mapbox.api.geocoding.v5.MapboxGeocoding;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.api.geocoding.v5.models.GeocodingResponse;
+import com.mapbox.api.optimization.v1.models.OptimizationWaypoint;
 import com.mapbox.core.exceptions.ServicesException;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
@@ -42,6 +43,8 @@ import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
@@ -81,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float POLYLINE_WIDTH = 5; // For optimized route's line
     private Symbol latestSearchedLocationSymbol; // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private SymbolManager symbolManager; // SymbolManager to add/remove symbols on the map
+    private static int counter; //DELETE THIS!
 
     // Variable to manipulate the bottom sheet
     private BottomSheetManager bottomSheetManager;
@@ -204,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void initSymbolLayer(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addLayer(new SymbolLayer("SYMBOL_LAYER_ID",
                 geojsonSourceLayerId).withProperties(
+//                        iconImage(symbolIconId),
                         iconImage(symbolIconId),
                         iconAllowOverlap(true),
                         iconOffset(new Float[] {0f, -8f})
@@ -310,12 +315,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Specify symbol size for the markers, to make them have approx. the same size
         float iconSize = specifyIconSize(iconImageString);
-
+        counter++;
         // Create a symbol at the specified location.
         SymbolOptions symbolOptions = new SymbolOptions()
                 .withLatLng(new LatLng(((Point) selectedCarmenFeature.geometry()).latitude(),
                         ((Point) selectedCarmenFeature.geometry()).longitude()))
                 .withIconImage(iconImageString)
+//                .withTextField(String.valueOf(counter))
+//                .withTextAnchor(Property.TEXT_ANCHOR_BOTTOM)
+                .withTextColor("white")
+                .withTextHaloColor("black")
+                .withTextHaloWidth(1.0f)
+                .withTextHaloBlur(0.25f)
+                .withTextSize(20.0f)
+                .withTextOffset(new Float[] {0f, -.05f})
                 .withIconSize(iconSize);
 
         // Use the manager to draw the symbol
@@ -353,6 +366,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Replaces the symbol's icon. Specifically, <b>RED_MARKER</b> to <b>BLUE_MARKER</b> and vice versa.
+     * For the update to take place the <b>SymbolManager</b> is used.
+     *
+     * @param symbol The symbol to be updated.
      */
     @Override
     public void updateSymbolIconInMap(Symbol symbol) {
@@ -507,6 +523,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      * This method will draw the optimized route (as a line) on the map.
      *
+     * @param route The DirectionsRoute object which has the optimized route.
      */
     @Override
     public void drawOptimizedRoute(DirectionsRoute route) {
@@ -524,6 +541,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+    }
+
+    /**
+     * This method will place a number on each location's Symbol depending on the order in which the route should be followed.
+     *
+     * @param waypoints A list of the optimized route's waypoints
+     */
+    @Override
+    public void updateNumberInSymbolIcons(List<OptimizationWaypoint> waypoints) {
+//        mapboxMap.getStyle().getSourceAs().set
+//        LongSparseArray<Symbol> allSymbols = symbolManager.getAnnotations().get().getLatLng()Lng()
+//        for (Symbol symbol : allSymbols) {
+//
+//        }
     }
 
     @Override

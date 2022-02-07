@@ -14,6 +14,7 @@ import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.api.optimization.v1.MapboxOptimization;
 import com.mapbox.api.optimization.v1.models.OptimizationResponse;
+import com.mapbox.api.optimization.v1.models.OptimizationWaypoint;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 
@@ -65,7 +66,7 @@ public class BottomSheetManager {
     private final String ADD_AS_STOP = "Add as stop"; // Should be exactly the same as the text in R.string.add_stop_txt
     private final String REMOVE_FROM_STOPS = "Remove from stops"; // Should be exactly the same as the text in R.string.remove_stop_txt
 
-    private SymbolsManagerInterface symbolsManagerInterface; // To perform create/update/delete actions on map symbols
+    private SymbolsManagerInterface symbolsManagerInterface; // To perform CRUD operations on map symbols
     private RouteOptimizationInterface routeOptimizationInterface;
     private MapboxOptimization optimizedClient;
 
@@ -203,8 +204,10 @@ public class BottomSheetManager {
                 .source(DirectionsCriteria.SOURCE_FIRST)
                 .destination(DirectionsCriteria.DESTINATION_LAST)
                 .coordinates(coordinates)
+                .roundTrip(false)
                 .overview(DirectionsCriteria.OVERVIEW_FULL)
                 .profile(DirectionsCriteria.PROFILE_DRIVING)
+                //.steps(true)
                 .accessToken(bottomSheet.getResources().getString(R.string.mapbox_access_token))
                 .build();
 
@@ -232,8 +235,21 @@ public class BottomSheetManager {
                                 Timber.d("----- 5. ------");
                                 // Get most optimized route from API response
                                 optimizedRoute = routes.get(0);
+
+                                Timber.d("\tNow will show the order of the waypoints");
+                                for (OptimizationWaypoint w : response.body().waypoints()) {
+                                    Timber.d("\t\t---------------------");
+                                    Timber.d("\t\twaypoint index: " + w.waypointIndex());
+                                    Timber.d("\t\twaypoint name: " + w.name());
+                                    Timber.d("\t\twaypoint location: " + w.location());
+                                    Timber.d("\t\ttrips index: " + w.tripsIndex());
+                                }
+
                                 Timber.d("----- BEFORE DRAW ------");
                                 routeOptimizationInterface.drawOptimizedRoute(optimizedRoute);
+                                Timber.d("----- BEFORE UPDATE OF SYMBOL ICON NUMBERS ------");
+                                symbolsManagerInterface.updateNumberInSymbolIcons(response.body().waypoints());
+
                             }
                         } else {
                             Timber.d("----- 6. ------");
