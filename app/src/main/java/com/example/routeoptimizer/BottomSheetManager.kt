@@ -1,5 +1,6 @@
 package com.example.routeoptimizer
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.pm.PackageInfo
@@ -55,10 +56,10 @@ class BottomSheetManager {
     //fenetai pws den xreiazetai na einai dialog fragment telika, arkei ena bottomSheetView kai ena bottomSheetBehavior!
     // Opote svhneis ta oncreate onattach ktlp, kai den klhrwnomeis apo thn bottomsheetdialogfragment
 
+    private lateinit var activity: Activity
     private lateinit var binding: BottomSheetPersistentBinding
     private lateinit var bottomSheetView: View
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
-    private lateinit var btnOptimize: Button
     private var currentCarmenFeature: CarmenFeature? = null
     private var currentCarmenFeatureGeometry: Point? = null
     private var optimizedRoute: DirectionsRoute? = null
@@ -73,12 +74,13 @@ class BottomSheetManager {
     private var routeOptimizationInterface: RouteOptimizationInterface? = null
     private var optimizedClient: MapboxOptimization? = null
 
-    fun initialize(bottomSheetView: View) {
+    fun initialize(activity: Activity, bottomSheetView: View) {
+        this.activity = activity
         this.bottomSheetView = bottomSheetView // Set bottom sheet reference
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetView)
         changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN) // Do not reveal bottom sheet on creation of the application.
 
-        btnOptimize = bottomSheetView.findViewById<Button>(R.id.btnOptimize)
+        binding = BottomSheetPersistentBinding.inflate(this.activity.layoutInflater)
 
         decideOptimizeButtonVisibility(MainActivity.stopsHashMap)
     }
@@ -186,11 +188,9 @@ class BottomSheetManager {
 
     fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
         if (hashMap.size < 2) {
-//            binding.btnOptimize.visibility = View.GONE
-            btnOptimize.visibility = View.GONE
+            binding.btnOptimize.visibility = View.GONE
         } else {
-//            binding.btnOptimize.visibility = View.VISIBLE
-            btnOptimize.visibility = View.VISIBLE
+            binding.btnOptimize.visibility = View.VISIBLE
         }
     }
 

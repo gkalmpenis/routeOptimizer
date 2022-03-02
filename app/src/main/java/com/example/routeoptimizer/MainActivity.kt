@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         //
 //        bottomSheetManager = BottomSheetManager()
 //        bottomSheetManager.initialize(findViewById(R.id.bottomSheet))
-        BottomSheetManager.getInstance().initialize(findViewById<ConstraintLayout>(R.id.bottomSheet))
+        BottomSheetManager.getInstance().initialize(this, findViewById<ConstraintLayout>(R.id.bottomSheet))
 
 //        bottomSheetManager = BottomSheetManager.instance
 //        bottomSheetManager.setSymbolsManagerInterface(this)  <-- important
@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             initializeSymbolManager(style)
 
             // Set up a layer to display the Symbols on the map
-            initSymbolLayer(style);
+            initSymbolLayer(style)
 
             // Set up a layer to display the optimized route's line
 //            initOptimizedRouteLineLayer(style)
@@ -493,6 +493,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
         // Update place name in bottom sheet
 //        bottomSheetManager!!.changePlaceNameText(feature.placeName())
+        BottomSheetManager.getInstance().changePlaceNameText(feature.placeName())
 
         // Notify the bottom sheet about its new currentCarmenFeature
 //        bottomSheetManager!!.setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
