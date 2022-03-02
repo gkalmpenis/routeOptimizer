@@ -76,12 +76,10 @@ class BottomSheetManager {
 
     fun initialize(activity: Activity, bottomSheetView: View) {
         this.activity = activity
+        binding = BottomSheetPersistentBinding.inflate(this.activity.layoutInflater)
         this.bottomSheetView = bottomSheetView // Set bottom sheet reference
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetView)
         changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN) // Do not reveal bottom sheet on creation of the application.
-
-        binding = BottomSheetPersistentBinding.inflate(this.activity.layoutInflater)
-
         decideOptimizeButtonVisibility(MainActivity.stopsHashMap)
     }
 
@@ -123,10 +121,7 @@ class BottomSheetManager {
         }
     }
 
-    fun setCurrentCarmenFeature(
-        currentCarmenFeature: CarmenFeature,
-        currentCarmenFeatureGeometry: Point
-    ) {
+    fun setCurrentCarmenFeature(currentCarmenFeature: CarmenFeature, currentCarmenFeatureGeometry: Point) {
         this.currentCarmenFeature = currentCarmenFeature
         this.currentCarmenFeatureGeometry = currentCarmenFeatureGeometry
     }
@@ -186,6 +181,10 @@ class BottomSheetManager {
 //        }
 //    }
 
+    /**
+     * Will decide if "Optimize" button will be shown.
+     * If there are >=2 stops it will, else it will not.
+     */
     fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
         if (hashMap.size < 2) {
             binding.btnOptimize.visibility = View.GONE

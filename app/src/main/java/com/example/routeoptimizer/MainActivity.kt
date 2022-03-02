@@ -235,7 +235,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     private fun initSearchFabClickListener() {
-//        findViewById<View>(R.id.fab_location_search).setOnClickListener {
         binding.fabLocationSearch.setOnClickListener {
             val intent = PlaceAutocomplete.IntentBuilder()
                 .accessToken(Mapbox.getAccessToken() ?: getString(R.string.mapbox_access_token))
@@ -244,7 +243,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                     .limit(10)
                     .build(PlaceOptions.MODE_CARDS))
                 .build(this@MainActivity)
-//            startActivityForResult(intent, REQUEST_CODE_AUTOCOMPLETE)
             resultLauncher.launch(intent)
         }
 //        }
@@ -319,33 +317,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 //        })
 //    }
 //
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_AUTOCOMPLETE) {
-//            // Retrieve selected location's CarmenFeature
-//            val selectedCarmenFeature = PlaceAutocomplete.getPlace(data)
-//            //            Point selectedCarmenFeatureGeometry = (Point) selectedCarmenFeature.geometry();
-//
-//            // Create a new FeatureCollection and add a new Feature to it using selectedCarmenFeature above.
-//            // Then retrieve and update the source designated for showing a selected location's symbol layer icon.
-//            if (mapboxMap != null) {
-//                val style = mapboxMap!!.style
-//                if (style != null) {
-//                    val source = style.getSourceAs<GeoJsonSource>(geojsonSourceLayerId)
-//                    source?.setGeoJson(FeatureCollection.fromFeatures(arrayOf(Feature.fromJson(selectedCarmenFeature.toJson()))))
-//
-//                    // Move map camera to the selected location
-//                    mapboxMap!!.animateCamera(CameraUpdateFactory.newCameraPosition(
-//                            CameraPosition.Builder()
-//                                    .target(LatLng((selectedCarmenFeature.geometry() as Point?)!!.latitude(),
-//                                            (selectedCarmenFeature.geometry() as Point?)!!.longitude()))
-//                                    .zoom(14.0)
-//                                    .build()), 4000)
-//                    performActionsOnSearchResult(selectedCarmenFeature)
-//                }
-//            }
-//        }
-//    }
 //
 //    override fun deleteSymbolFromMap(symbol: Symbol) {
     private fun deleteSymbolFromMap(symbol: Symbol) {
@@ -492,17 +463,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER)
 
         // Update place name in bottom sheet
-//        bottomSheetManager!!.changePlaceNameText(feature.placeName())
         BottomSheetManager.getInstance().changePlaceNameText(feature.placeName())
 
         // Notify the bottom sheet about its new currentCarmenFeature
-//        bottomSheetManager!!.setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
+        BottomSheetManager.getInstance().setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
 
         // Refresh the state of bottom sheet's stopsButton
-//        bottomSheetManager!!.refreshStateOfStopsButton()
+        BottomSheetManager.getInstance().refreshStateOfStopsButton()
 
         // Reveal bottom sheet
-//        bottomSheetManager!!.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
         BottomSheetManager.getInstance().changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
     }
 //
