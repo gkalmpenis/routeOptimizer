@@ -9,12 +9,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import com.example.routeoptimizer.databinding.ActivityMainBinding
+import com.example.routeoptimizer.viewmodels.MainActivityViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.api.geocoding.v5.models.CarmenFeature
@@ -58,6 +59,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     // For Places plugin (Search) functionality
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
+    private val mainActivityViewModel: MainActivityViewModel by viewModels()
+
     private val geojsonSourceLayerId = "geojsonSourceLayerId"
     private val symbolIconId = "symbolIconId" // Maybe won't be used, should delete?
     private val RED_MARKER = "RED_MARKER" // Corresponds to locations that are searched but not added in stopsHashMap
@@ -66,7 +69,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private var symbolManager: SymbolManager? = null // SymbolManager to add/remove symbols on the map
 
     // Variable to manipulate the bottom sheet
-//    private lateinit var bottomSheetManager: BottomSheetManager  // Will be directly manipulated through BottomSheetManager.getInstance() ??
+//    private lateinit var bottomSheetManager: BottomSheetManager  // --> Will be directly manipulated through BottomSheetManager.getInstance() ??
 
     // variables for adding search functionality
     private val REQUEST_CODE_AUTOCOMPLETE = 1
@@ -74,20 +77,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val POLYLINE_WIDTH = 5f // For optimized route's line
     private var counter = 0 //DELETE THIS!
 
-    companion object {
-        // HashMap that will contain locations that user adds as stop
-        @JvmField
-        var stopsHashMap = LinkedHashMap<Point, CarmenFeature>()
-    }
+//    companion object {
+//        // HashMap that will contain locations that user adds as stop
+//        @JvmField
+//        var stopsHashMap = LinkedHashMap<Point, CarmenFeature>()
+//    }
 
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // Initialize Timber for logging
-        if (BuildConfig.DEBUG) {
-            Timber.plant(DebugTree())
-        }
+        if (BuildConfig.DEBUG) { Timber.plant(DebugTree()) }
+
+//        val mainActivityViewModel: MainActivityViewModel by viewModels()
+
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -107,7 +112,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         //
 //        bottomSheetManager = BottomSheetManager()
 //        bottomSheetManager.initialize(findViewById(R.id.bottomSheet))
-        BottomSheetManager.getInstance().initialize(this, findViewById<ConstraintLayout>(R.id.bottomSheet))
+        BottomSheetManager.getInstance().initialize(this, findViewById<ConstraintLayout>(R.id.bottomSheet), mainActivityViewModel.stopsHashMap.value)
 
 //        bottomSheetManager = BottomSheetManager.instance
 //        bottomSheetManager.setSymbolsManagerInterface(this)  <-- important
@@ -469,9 +474,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         BottomSheetManager.getInstance().setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
 
         // Refresh the state of bottom sheet's stopsButton
-        BottomSheetManager.getInstance().refreshStateOfStopsButton()
+        Timber.d("--Prin kalesoume thn refreshStateOfStopsButton()--")
+        BottomSheetManager.getInstance().refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap.value)
 
         // Reveal bottom sheet
+    Timber.d("--Prin kalesoume thn changeBottomSheetState()--")
         BottomSheetManager.getInstance().changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
     }
 //
