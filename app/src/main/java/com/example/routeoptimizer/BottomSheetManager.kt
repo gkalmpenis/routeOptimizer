@@ -21,6 +21,8 @@ import com.example.routeoptimizer.BottomSheetManager.StopsButtonState
 import com.example.routeoptimizer.MainActivity
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 import com.example.routeoptimizer.R
 import timber.log.Timber
 import com.mapbox.api.directions.v5.DirectionsCriteria
@@ -29,6 +31,7 @@ import com.mapbox.api.optimization.v1.models.OptimizationWaypoint
 import com.example.routeoptimizer.BottomSheetManager
 import com.example.routeoptimizer.databinding.ActivityMainBinding
 import com.example.routeoptimizer.databinding.BottomSheetPersistentBinding
+import com.example.routeoptimizer.viewmodels.MainActivityViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.mapbox.geojson.Point
 import retrofit2.Call
@@ -51,7 +54,7 @@ import java.util.LinkedHashMap
 //class BottomSheetManager  // A private Constructor prevents any other class from instantiating.
 //private constructor() {
 //object BottomSheetManager {
-class BottomSheetManager {
+class BottomSheetManager: BottomSheetDialogFragment() {
 
     //fenetai pws den xreiazetai na einai dialog fragment telika, arkei ena bottomSheetView kai ena bottomSheetBehavior!
     // Opote svhneis ta oncreate onattach ktlp, kai den klhrwnomeis apo thn bottomsheetdialogfragment
@@ -74,13 +77,19 @@ class BottomSheetManager {
     private var routeOptimizationInterface: RouteOptimizationInterface? = null
     private var optimizedClient: MapboxOptimization? = null
 
-    fun initialize(activity: Activity, bottomSheetView: View) {
+    fun initialize(activity: Activity,
+                   bottomSheetView: View,
+                   stopsHashMap: LinkedHashMap<Point, CarmenFeature>?
+    ) {
         this.activity = activity
-        binding = BottomSheetPersistentBinding.inflate(this.activity.layoutInflater)
+
+        val inflater = LayoutInflater.from(activity.applicationContext)
+        binding = BottomSheetPersistentBinding.inflate(inflater)
+
         this.bottomSheetView = bottomSheetView // Set bottom sheet reference
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetView)
         changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN) // Do not reveal bottom sheet on creation of the application.
-        decideOptimizeButtonVisibility(MainActivity.stopsHashMap)
+        decideOptimizeButtonVisibility(stopsHashMap)
     }
 
     /* Methods protected by singleton-ness */
@@ -130,11 +139,14 @@ class BottomSheetManager {
      * Checks if the *stopsHashMap* contains the *currentCarmenFeature* (which was either searched or clicked)
      * and updates the state of the *stopsButton* accordingly
      */
-    fun refreshStateOfStopsButton() {
-        if (MainActivity.stopsHashMap.containsKey(currentCarmenFeatureGeometry)) {
-            changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
-        } else {
-            changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
+    fun refreshStateOfStopsButton(stopsHashMap: LinkedHashMap<Point, CarmenFeature>?) {
+        Timber.d("--kalesame thn refreshStateOfStopsButton()--")
+        stopsHashMap?.let {
+            if (it.containsKey(currentCarmenFeatureGeometry)) {
+                changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
+            } else {
+                changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
+            }
         }
     }
 
@@ -185,10 +197,15 @@ class BottomSheetManager {
      * Will decide if "Optimize" button will be shown.
      * If there are >=2 stops it will, else it will not.
      */
-    fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
-        if (hashMap.size < 2) {
+    fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>?) {
+        Timber.d("decideOptimizeButtonVisibility() called")
+        if (hashMap == null || hashMap.size < 2) {
+            Timber.d("decideOptimizeButtonVisibility() --> hashMap is null or hashMap.size < 2")
+
             binding.btnOptimize.visibility = View.GONE
         } else {
+            Timber.d("decideOptimizeButtonVisibility() --> hashMap.size >= 2")
+
             binding.btnOptimize.visibility = View.VISIBLE
         }
     }
