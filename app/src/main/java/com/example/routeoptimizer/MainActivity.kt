@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -91,8 +92,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         // Initialize Timber for logging
         if (BuildConfig.DEBUG) { Timber.plant(DebugTree()) }
 
-//        val mainActivityViewModel: MainActivityViewModel by viewModels()
-
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -112,7 +111,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         //
 //        bottomSheetManager = BottomSheetManager()
 //        bottomSheetManager.initialize(findViewById(R.id.bottomSheet))
-        BottomSheetManager.getInstance().initialize(this, findViewById<ConstraintLayout>(R.id.bottomSheet), mainActivityViewModel.stopsHashMap.value)
+
+//        BottomSheetManager.getInstance().initialize(this, findViewById<ConstraintLayout>(R.id.bottomSheet), mainActivityViewModel)
+
+//        BottomSheetManager.getInstance().initValues(this, findViewById<ConstraintLayout>(R.id.bottomSheet), mainActivityViewModel)
+//        binding.bottomSheet.initValues(findViewById<ConstraintLayout>(R.id.bottomSheet), mainActivityViewModel)
+
+        binding.bottomSheetView.initValues(mainActivityViewModel)
+//        val bottomSheetManager = BottomSheetManager(baseContext)
+//        bottomSheetManager.initValues(mainActivityViewModel)
+
+//        BottomSheetManager.getInstance().show(supportFragmentManager, "BottomSheetPersistent")
 
 //        bottomSheetManager = BottomSheetManager.instance
 //        bottomSheetManager.setSymbolsManagerInterface(this)  <-- important
@@ -468,18 +477,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER)
 
         // Update place name in bottom sheet
-        BottomSheetManager.getInstance().changePlaceNameText(feature.placeName())
+//        BottomSheetManager.getInstance().changePlaceNameText(feature.placeName())
+//        binding.bottomSheet.changePlaceNameText(feature.placeName())
 
         // Notify the bottom sheet about its new currentCarmenFeature
-        BottomSheetManager.getInstance().setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
+//        BottomSheetManager.getInstance().setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
+//        binding.bottomSheet.setCurrentCarmenFeature(feature, (feature.geometry() as Point?)!!)
 
         // Refresh the state of bottom sheet's stopsButton
         Timber.d("--Prin kalesoume thn refreshStateOfStopsButton()--")
-        BottomSheetManager.getInstance().refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap.value)
+//        BottomSheetManager.getInstance().refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap.value)
+//        binding.bottomSheet.refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap.value)
 
         // Reveal bottom sheet
-    Timber.d("--Prin kalesoume thn changeBottomSheetState()--")
-        BottomSheetManager.getInstance().changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
+        Timber.d("--Prin kalesoume thn changeBottomSheetState()--")
+//        BottomSheetManager.getInstance().changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
+//        binding.bottomSheet.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
     }
 //
 //    /**

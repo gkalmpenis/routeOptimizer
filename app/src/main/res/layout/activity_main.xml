@@ -26,10 +26,22 @@
         app:backgroundTint="@color/mapbox_blue"
         app:srcCompat="@android:drawable/ic_search_category_default"
         android:contentDescription="@string/location_search_txt"
-        app:layout_anchor="@+id/bottomSheet"
+        app:layout_anchor="@id/bottom_sheet_view"
         app:layout_anchorGravity="top|end" />
 
-    <include layout="@layout/bottom_sheet_persistent" />
+<!--    <include-->
+<!--        android:id="@+id/bottom_sheet_view"-->
+<!--        layout="@layout/bottom_sheet_persistent" />-->
+
+    <com.example.routeoptimizer.BottomSheetManager
+        android:id="@+id/bottom_sheet_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_corners"
+        android:paddingBottom="8dp"
+        app:behavior_hideable="true"
+        app:behavior_peekHeight="28dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
