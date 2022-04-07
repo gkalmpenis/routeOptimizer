@@ -11,12 +11,14 @@ class MainActivityViewModel: ViewModel() {
 
     // HashMap that will contain locations that user adds as stop
 //    @JvmField
-    val stopsHashMap: MutableLiveData<LinkedHashMap<Point, CarmenFeature>> by lazy {
-        MutableLiveData<LinkedHashMap<Point, CarmenFeature>>()
-    }
+//    val stopsHashMap: MutableLiveData<LinkedHashMap<Point, CarmenFeature>> by lazy {
+//        MutableLiveData<LinkedHashMap<Point, CarmenFeature>>()
+//    }
 
-    fun addStopToMap(point: Point, feature: CarmenFeature) {
-        Timber.d("--Mphkame sthn addStopToMap()--")
-        stopsHashMap.value?.put(point, feature)
-    }
+    // Etsi ginetai to observe? Epishs mallon paei sto activity kai oxi edw sto view model
+//    mainActivityViewModel.stopsHashMap.observe(this, Observer { hashmap ->
+//        hashmap.put((feature.geometry() as Point), feature)
+//        Timber.d("--Megethos tou hashmap: ${hashmap.size}")
+//    })
+
 }

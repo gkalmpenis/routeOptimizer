@@ -12,11 +12,9 @@ interface SymbolsManagerInterface {
     }
 
     fun createSymbolInMap(selectedCarmenFeature: CarmenFeature, iconImageString: String): Symbol?
-    fun updateSymbolIconInMap(symbol: Symbol?)
+    fun switchSymbolIconInMap(symbol: Symbol)
     fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint?>?)
-    fun deleteSymbolFromMap(symbol: Symbol?)
+    fun deleteSymbolFromMap(symbol: Symbol)
     fun changeIconSize(symbol: Symbol, size: Float)
-    val latestSearchedSymbol: Symbol?
-
-
+    fun getLatestSearchedSymbol(): Symbol?
 }
