@@ -13,8 +13,13 @@ interface SymbolsManagerInterface {
 
     fun createSymbolInMap(selectedCarmenFeature: CarmenFeature, iconImageString: String): Symbol?
     fun switchSymbolIconInMap(symbol: Symbol)
-    fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint?>?)
+    fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>)
     fun deleteSymbolFromMap(symbol: Symbol)
     fun changeIconSize(symbol: Symbol, size: Float)
     fun getLatestSearchedSymbol(): Symbol?
+    // Mporeis na peis "val latestSearchedSymbolOne: Symbol?"
+    // kai sthn mainActivity na kaneis
+    // override val latestSearchedSymbolOne: Symbol?
+    //        get() = { return latestSearchedLocationSymbol }
+
 }

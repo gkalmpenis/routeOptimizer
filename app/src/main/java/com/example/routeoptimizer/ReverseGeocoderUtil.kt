@@ -13,7 +13,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
 
-object ReverseGeocoder {
+object ReverseGeocoderUtil {
 
     /**
      * This method is used to reverse geocode where the user has dropped the marker.

@@ -293,7 +293,7 @@ class BottomSheetManager: ConstraintLayout {
                                 Timber.d("----- BEFORE DRAW ------")
                                 routeOptimizationInterface.drawOptimizedRoute(optimizedRoute)
                                 Timber.d("----- BEFORE UPDATE OF SYMBOL ICON NUMBERS ------")
-                                symbolsManagerInterface.updateNumberInSymbolIcons(response.body()!!.waypoints())
+                                symbolsManagerInterface.updateNumberInSymbolIcons(response.body()!!.waypoints()!!)
                             }
                         } else {
                             Timber.d("----- 6. ------")

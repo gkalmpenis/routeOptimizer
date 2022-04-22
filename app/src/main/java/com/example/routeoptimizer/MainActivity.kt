@@ -6,28 +6,21 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
 import com.example.routeoptimizer.databinding.ActivityMainBinding
 import com.example.routeoptimizer.viewmodels.MainActivityViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.api.geocoding.v5.GeocodingCriteria
-import com.mapbox.api.geocoding.v5.MapboxGeocoding
 import com.mapbox.api.geocoding.v5.models.CarmenFeature
-import com.mapbox.api.geocoding.v5.models.GeocodingResponse
 import com.mapbox.api.optimization.v1.models.OptimizationWaypoint
 import com.mapbox.core.constants.Constants
-import com.mapbox.core.exceptions.ServicesException
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.LineString
@@ -53,9 +46,6 @@ import com.mapbox.mapboxsdk.style.layers.LineLayer
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 
@@ -385,7 +375,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     fun addMapLongClickListener() {
         mapboxMap.addOnMapLongClickListener { point ->
 //            reverseGeocode(Point.fromLngLat(point.longitude, point.latitude))
-            ReverseGeocoder.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
+            ReverseGeocoderUtil.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
             true
         }
     }
@@ -447,7 +437,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 ////
 ////        }
 //    }
-    override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint?>?) {
+    override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
         // Not yet implemented!
     }
 
