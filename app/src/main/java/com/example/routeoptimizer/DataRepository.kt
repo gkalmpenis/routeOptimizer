@@ -19,4 +19,8 @@ object DataRepository {
         }
         return coordinates
     }
+
+    // Exe kata nou pws an bgeis apthn efarmogh kai ksanampeis (xwris na thn kleiseis)
+    // tha meinoun ta data ston stopsHashMap opote prepei na paikseis m auto
+    // (mporeis na ton adeiaseis sto ondestroy alla idanika ftiaksto me livedata sto viewmodel)
 }

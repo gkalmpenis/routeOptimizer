@@ -162,9 +162,10 @@ class BottomSheetManager: ConstraintLayout {
 
                     // Update the marker in that location. It should have been red, make it blue
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
-                    symbolsManagerInterface.changeIconSize(
+                    symbolsManagerInterface.changeIconAndTextSize(
                         symbolsManagerInterface.getLatestSearchedSymbol()!!,
-                        SymbolsManagerInterface.BLUE_MARKER_EXPANDED_SIZE
+                        SymbolsManagerInterface.BLUE_MARKER_EXPANDED_ICON_SIZE,
+                        SymbolsManagerInterface.BLUE_MARKER_EXPANDED_TEXT_SIZE
                     )
 
                     // Change the stopsButton's text

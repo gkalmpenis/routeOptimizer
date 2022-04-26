@@ -271,7 +271,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 resetIconSizeInBlueMarkers()
 
                 // Expand the symbol size of the currently displayed blue marker
-                changeIconSize(symbol, SymbolsManagerInterface.BLUE_MARKER_EXPANDED_SIZE)
+                changeIconAndTextSize(
+                    symbol,
+                    SymbolsManagerInterface.BLUE_MARKER_EXPANDED_ICON_SIZE,
+                    SymbolsManagerInterface.BLUE_MARKER_EXPANDED_TEXT_SIZE
+                )
 
                 // The new symbol now becomes the latest one we searched
                 latestSearchedLocationSymbol = symbol
@@ -310,14 +314,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 .withLatLng(LatLng((selectedCarmenFeature.geometry() as Point?)!!.latitude(),
                         (selectedCarmenFeature.geometry() as Point?)!!.longitude()))
                 .withIconImage(iconImageString)
-                //                .withTextField(String.valueOf(counter))
-                //                .withTextAnchor(Property.TEXT_ANCHOR_BOTTOM)
-                //.withTextColor("white")
-                //.withTextHaloColor("black")
-                //.withTextHaloWidth(1.0f)
-                //.withTextHaloBlur(0.25f)
-                //.withTextSize(20.0f)
-                //.withTextOffset(arrayOf(0f, -.05f))
+//                .withTextField(counter.toString())
+//                .withTextAnchor(Property.TEXT_ANCHOR_BOTTOM)
+//                .withTextJustify(Property.TEXT_JUSTIFY_AUTO) // Effects text over 1 char
+//                .withTextColor("white")
+//                .withTextHaloColor("black")
+//                .withTextHaloWidth(1.0f)
+//                .withTextHaloBlur(0.25f)
+//                .withTextSize(20.0f)
+//                .withTextOffset(arrayOf(0f, -.05f))
                 .withIconSize(iconSize)
 
         // Use the manager to draw the symbol
@@ -326,15 +331,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 //
     private fun specifyIconSize(iconImageString: String): Float {
         if (iconImageString == RED_MARKER) {
-            return SymbolsManagerInterface.RED_MARKER_ORIGINAL_SIZE
+            return SymbolsManagerInterface.RED_MARKER_ORIGINAL_ICON_SIZE
         }
         return if (iconImageString == BLUE_MARKER) {
-            SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_SIZE
+            SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_ICON_SIZE
         } else 1.0f
     }
-//
-    override fun changeIconSize(symbol: Symbol, size: Float) {
-        symbol.iconSize = size
+
+    /**
+     * Changes the size of the specified symbol and its text size (if applicable)
+     */
+    override fun changeIconAndTextSize(symbol: Symbol, iconSize: Float, textSize: Float) {
+        symbol.iconSize = iconSize
+        symbol.textSize = textSize
         symbolManager.update(symbol)
     }
 //
@@ -342,7 +351,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         for (i in 0 until symbolManager.annotations.size()) {
             val currentSymbol = symbolManager.annotations.valueAt(i)
             if (currentSymbol.iconImage == BLUE_MARKER) {
-                changeIconSize(currentSymbol, SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_SIZE)
+                changeIconAndTextSize(
+                    currentSymbol,
+                    SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_ICON_SIZE,
+                    SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_TEXT_SIZE
+                )
             }
         }
     }
@@ -439,6 +452,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 //    }
     override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
         // Not yet implemented!
+
+        // Take the below values as guidance for the text
+//        symbol.textAnchor = Property.TEXT_ANCHOR_CENTER // Anchor of blue marker is its central circle
+//        symbol.textColor = "white"
+//        symbol.textHaloColor = "black"
+//        symbol.textHaloWidth = 1.0f
+//        symbol.textHaloBlur = 0.25f
+//        symbol.textOffset = PointF(0f, -.1f)
     }
 
     override fun onStart() {
