@@ -5,12 +5,14 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.PointF
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.collection.forEach
 import androidx.core.content.ContextCompat
 import com.example.routeoptimizer.databinding.ActivityMainBinding
 import com.example.routeoptimizer.viewmodels.MainActivityViewModel
@@ -42,7 +44,9 @@ import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions
+import com.mapbox.mapboxsdk.style.expressions.Expression
 import com.mapbox.mapboxsdk.style.layers.LineLayer
+import com.mapbox.mapboxsdk.style.layers.Property
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
@@ -73,8 +77,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val REQUEST_CODE_AUTOCOMPLETE = 1
     private val TEAL_COLOR = "#23D2BE" // For optimized route's line
     private val POLYLINE_WIDTH = 5f // For optimized route's line
+    private val SYMBOL_LAYER_ID = "symbol-layer-id"
     private val OPTIMIZED_ROUTE_SOURCE_ID = "optimized-route-source-id"
     private val OPTIMIZED_ROUTE_LAYER_ID = "optimized-route-layer-id"
+    private val ROUTE_ARROWS_LAYER_ID = "route-arrows-layer-id"
     private var counter = 0 //DELETE THIS!
 
     private lateinit var binding: ActivityMainBinding
@@ -120,6 +126,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
             // Set up a layer to display the optimized route's line
             initOptimizedRouteLineLayer(style)
+
+            // Set up a layer to display arrows on the optimized route's line
+            initArrowsOnOptimizedRouteLayer(style)
 
             addAnnotationClickListener()
             addMapLongClickListener()
@@ -237,7 +246,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 //
     private fun initSymbolLayer(loadedMapStyle: Style) {
-        loadedMapStyle.addLayer(SymbolLayer("SYMBOL_LAYER_ID",
+        loadedMapStyle.addLayer(SymbolLayer(SYMBOL_LAYER_ID,
                 geojsonSourceLayerId).withProperties(
 //                iconImage(symbolIconId),
                 PropertyFactory.iconImage(symbolIconId),
@@ -254,6 +263,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                         PropertyFactory.lineColor(Color.parseColor(TEAL_COLOR)),
                         PropertyFactory.lineWidth(POLYLINE_WIDTH)
                 ), symbolManager.layerId)
+    }
+
+    private fun initArrowsOnOptimizedRouteLayer(loadedMapStyle: Style) {
+        loadedMapStyle.addLayerAbove(
+            SymbolLayer(ROUTE_ARROWS_LAYER_ID, OPTIMIZED_ROUTE_SOURCE_ID)
+            .withProperties(
+                PropertyFactory.symbolPlacement(Property.SYMBOL_PLACEMENT_LINE),
+                PropertyFactory.textField("▶"),
+                PropertyFactory.textSize(
+                    Expression.interpolate(
+                        Expression.Interpolator.linear(),
+                        Expression.zoom(),
+                        Expression.stop(12, 24),
+                        Expression.stop(22, 60)
+                    )
+                ),
+                PropertyFactory.symbolSpacing(
+                    Expression.interpolate(
+                        Expression.Interpolator.linear(),
+                        Expression.zoom(),
+                        Expression.stop(12, 30),
+                        Expression.stop(22, 160)
+                    )
+                ),
+                PropertyFactory.textKeepUpright(false),
+                // Paint properties
+                PropertyFactory.textColor(TEAL_COLOR),
+                PropertyFactory.textHaloColor(androidx.core.graphics.ColorUtils.HSLToColor(floatArrayOf(55f, .11f, .96f))),
+                PropertyFactory.textHaloWidth(3f)
+            ), OPTIMIZED_ROUTE_LAYER_ID)
     }
 
 //    /**
@@ -385,12 +424,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         return latestSearchedLocationSymbol
     }
 
-    fun addMapLongClickListener() {
+    private fun addMapLongClickListener() {
         mapboxMap.addOnMapLongClickListener { point ->
-//            reverseGeocode(Point.fromLngLat(point.longitude, point.latitude))
-            ReverseGeocoderUtil.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
+            // If a symbol already exists there do nothing. This was causing the app to crash
+            if (!symbolExists(point)) {
+                ReverseGeocoderUtil.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
+            }
             true
         }
+    }
+
+    private fun symbolExists(point: LatLng): Boolean {
+        symbolManager.annotations.forEach { key, value ->
+            if (value.latLng.latitude in point.latitude.minus(.00005)..point.latitude.plus(.00005)
+                && value.latLng.longitude in point.longitude.minus(.00005)..point.longitude.plus(.00005)) {
+                return true
+            }
+        }
+
+        return false
     }
 
     fun performActionsOnSearchResult(feature: CarmenFeature) {
@@ -437,29 +489,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             }
         }
     }
-//
-//    /**
-//     * This method will place a number on each location's Symbol depending on the order in which the route should be followed.
-//     *
-//     * @param waypoints A list of the optimized route's waypoints
-//     */
-//    override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
-////        mapboxMap.getStyle().getSourceAs().set
-////        LongSparseArray<Symbol> allSymbols = symbolManager.getAnnotations().get().getLatLng()Lng()
-////        for (Symbol symbol : allSymbols) {
-////
-////        }
-//    }
-    override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
-        // Not yet implemented!
 
-        // Take the below values as guidance for the text
-//        symbol.textAnchor = Property.TEXT_ANCHOR_CENTER // Anchor of blue marker is its central circle
-//        symbol.textColor = "white"
-//        symbol.textHaloColor = "black"
-//        symbol.textHaloWidth = 1.0f
-//        symbol.textHaloBlur = 0.25f
-//        symbol.textOffset = PointF(0f, -.1f)
+    /**
+     * This method places a number on each location's Symbol depending on the order in which the route should be followed.
+     *
+     * @param waypoints A list of the optimized route's waypoints
+     */
+    override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
+        DataRepository.alreadyCheckedWaypoints.clear()
+
+        for (i in 0 until symbolManager.annotations.size()) {
+            val currentSymbol = symbolManager.annotations.valueAt(i)
+            if (currentSymbol.iconImage == BLUE_MARKER) {
+                // Decide which number to show on current symbol based on its latitude-longitude
+                val waypointIndex = DataRepository.getWaypointIndexByLatLng(waypoints, currentSymbol.latLng)
+
+                currentSymbol.textField = waypointIndex?.let { it.toString() } ?: "?" // Better UX to show "?" than to show "null"
+                currentSymbol.textAnchor = Property.TEXT_ANCHOR_CENTER // Anchor of blue marker is its central circle
+                currentSymbol.textColor = "white"
+                currentSymbol.textHaloColor = "black"
+                currentSymbol.textHaloWidth = 1.0f
+                currentSymbol.textHaloBlur = 0.25f
+                currentSymbol.textOffset = PointF(0f, -.1f)
+
+                // Use the manager to update the symbol
+                symbolManager.update(currentSymbol)
+            }
+        }
     }
 
     override fun onStart() {
@@ -494,6 +550,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onDestroy() {
         super.onDestroy()
+        // Pare optimizedClient apo bottom sheet manager
+        //optimizedClient?.cancelCall()
         binding.mapView.onDestroy()
     }
+
+    /*
+    TODO
+     	// Bug 1: H symbolExists tha mporouse na paei mesa sthn performActionsOnSearchResult, alla einai brwmia!
+        // Epishs tha mporouse na elegthei kai allou (se allo shmeio tou kwdika, hmoun kommatia otan to egrafa lel)
+        // Bug 2: Den fainetai h piksida kapoies fores
+        // Bug 3: Otan to bottomSheet einai katebasmeno kai psaxneis topothesia den shkwnetai kala. Logika arkei
+        // na baleis to invalidate na ginetai panta anti gia mono thn 1h fora!
+     */
 }

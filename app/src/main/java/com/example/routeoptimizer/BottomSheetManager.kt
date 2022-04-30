@@ -1,6 +1,5 @@
 package com.example.routeoptimizer
 
-//import com.example.routeoptimizer.BottomSheetManager.StopsButtonState
 import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
@@ -152,7 +151,7 @@ class BottomSheetManager: ConstraintLayout {
 
                     // Add the manager's currently shown CarmenFeature in MainActivity's HashMap
                     Timber.d("--Vazoume stop ston hashmap--")
-                    DataRepository.stopsHashMap.put(currentCarmenFeatureGeometry!!, currentCarmenFeature!!)
+                    DataRepository.stopsHashMap[currentCarmenFeatureGeometry!!] = currentCarmenFeature!!
 
                     // Update the current stops counter
                     Timber.d("--kanoume update ton counter--")
@@ -220,7 +219,6 @@ class BottomSheetManager: ConstraintLayout {
                     BottomSheetBehavior.STATE_EXPANDED -> {
                         bottomSheet.post {
                             if (!hasAlreadyBeenShown) {
-                                Timber.d("-- Kanoume to invalidate --")
                                 //workaround for the bottomsheet  bug
                                 bottomSheet.requestLayout()
                                 //bottomSheet.invalidate() // Seems to have no effect
@@ -254,12 +252,13 @@ class BottomSheetManager: ConstraintLayout {
 
         // Build the optimized route
         optimizedClient = MapboxOptimization.builder()
-            .source(DirectionsCriteria.SOURCE_FIRST)
-            .destination(DirectionsCriteria.DESTINATION_LAST)
+            .source(DirectionsCriteria.SOURCE_FIRST) // Probably first means the first element found in coordinates, which would be the first element inserted in stopsHashMap
+            .destination(DirectionsCriteria.DESTINATION_LAST) // Again, last probably means the last element found in coordinates. It's better to set "any" here.
             .coordinates(coordinates)
             .roundTrip(false)
             .overview(DirectionsCriteria.OVERVIEW_FULL)
-            .profile(DirectionsCriteria.PROFILE_DRIVING) //.steps(true)
+            .profile(DirectionsCriteria.PROFILE_DRIVING)
+//            .steps(true) // Turn-by-turn instructions
             .accessToken(this.resources.getString(R.string.mapbox_access_token))
             .build()
         Timber.d("----- AFTER BUILD ------")
@@ -283,6 +282,8 @@ class BottomSheetManager: ConstraintLayout {
                                 Timber.d("----- 5. ------")
                                 // Get most optimized route from API response
                                 optimizedRoute = routes[0]
+//                                val duration = routes[0].duration() // duration in seconds
+//                                val distance = routes[0].distance() // distance in meters
                                 Timber.d("\tNow will show the order of the waypoints")
                                 for (w in response.body()!!.waypoints()!!) {
                                     Timber.d("\t\t---------------------")
