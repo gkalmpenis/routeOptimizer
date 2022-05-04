@@ -1,5 +1,6 @@
 package com.example.routeoptimizer.viewmodels
 
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,16 +10,17 @@ import timber.log.Timber
 
 class MainActivityViewModel: ViewModel() {
 
-    // HashMap that will contain locations that user adds as stop
-//    @JvmField
-//    val stopsHashMap: MutableLiveData<LinkedHashMap<Point, CarmenFeature>> by lazy {
-//        MutableLiveData<LinkedHashMap<Point, CarmenFeature>>()
+//    // Experiment to place stopsHashMap inside this viewModel
+//    private val testHashMap = LinkedHashMap<Point, CarmenFeature>()
+//    var testHashMapLive = MutableLiveData<LinkedHashMap<Point, CarmenFeature>>() // <-- This is what will be observed!
+//    fun addToTestHasHMap(p: Point, c: CarmenFeature) {
+//        testHashMap[p] = c
+//        testHashMapLive.value = testHashMap
 //    }
-
-    // Etsi ginetai to observe? Epishs mallon paei sto activity kai oxi edw sto view model
-//    mainActivityViewModel.stopsHashMap.observe(this, Observer { hashmap ->
-//        hashmap.put((feature.geometry() as Point), feature)
-//        Timber.d("--Megethos tou hashmap: ${hashmap.size}")
-//    })
-
+//    // And then in MainActivity we can do something like
+//    mainActivityViewModel.addToTestHasHMap(point, carmenFeature)
+//    // And to observe it (in onCreate)
+//    mainActivityViewModel.testHashMapLive.observe(this) {
+//        // actions!
+//    }
 }

@@ -17,6 +17,7 @@ interface SymbolsManagerInterface {
     fun switchSymbolIconInMap(symbol: Symbol)
     fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>)
     fun deleteSymbolFromMap(symbol: Symbol)
+    fun clearMapData()
     fun changeIconAndTextSize(symbol: Symbol, iconSize: Float, textSize: Float)
     fun getLatestSearchedSymbol(): Symbol?
     // Mporeis na peis "val latestSearchedSymbolOne: Symbol?"

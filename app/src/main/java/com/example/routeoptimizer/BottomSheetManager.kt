@@ -11,6 +11,7 @@ import com.example.routeoptimizer.databinding.BottomSheetPersistentBinding
 import com.example.routeoptimizer.viewmodels.MainActivityViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.geocoding.v5.models.CarmenFeature
@@ -47,7 +48,7 @@ class BottomSheetManager: ConstraintLayout {
 //
 //    // Variable "this" in this class refers to the View of bottomSheet per se!
 //
-////    private lateinit var activity: Activity // Is it needed? If yes, it can be set inside initValues()
+    private lateinit var activity: Activity // Is it needed? If yes, it can be set inside initValues()
 //
     private lateinit var binding: BottomSheetPersistentBinding
 //    //    private lateinit var bottomSheetView: View // Should be replaced with "this" . DELETE when done!
@@ -67,15 +68,13 @@ class BottomSheetManager: ConstraintLayout {
     private lateinit var symbolsManagerInterface : SymbolsManagerInterface // To perform CRUD operations on map symbols
     private lateinit var routeOptimizationInterface: RouteOptimizationInterface
     private lateinit var optimizedClient: MapboxOptimization
-    private var hasAlreadyBeenShown: Boolean = false // To solve UI bug
 
     fun initValues(activity: Activity, mainActivityViewModel: MainActivityViewModel) {
-        Timber.d("--Mphkame sthn initValues--")
-//        this.activity = activity // delete?
+        this.activity = activity // needed?
         this.mainActivityViewModel = mainActivityViewModel
 //        this.bottomSheetView = bottomSheetView // Set bottom sheet reference // delete because bottomSheetView is "this" !
         bottomSheetBehavior = BottomSheetBehavior.from(this)
-        redesignOnFirstExpand()
+        redesignWhenExpanded()
 
         symbolsManagerInterface = activity as SymbolsManagerInterface
         routeOptimizationInterface = activity as RouteOptimizationInterface
@@ -88,8 +87,7 @@ class BottomSheetManager: ConstraintLayout {
         setOnClickListener()
         addStopsButtonOnClickListener()
         addOptimizeButtonOnClickListener()
-
-        Timber.d("--Twra tha bgoume apo thn initValues--")
+        addClearButtonOnClickListener()
     }
 
     fun changeBottomSheetState(newState: Int) { bottomSheetBehavior.state = newState }
@@ -108,17 +106,23 @@ class BottomSheetManager: ConstraintLayout {
         }
     }
 
-    fun changePlaceNameText(newText: String?) {
-        Timber.d("--Mphkame sthn changePlaceNameText, newText: $newText--")
+    fun setPlaceNameText(newText: String?) {
         binding.tvPlaceName.text = newText
     }
 
-    private fun changeStateOfStopsButton(state: StopsButtonState) {
+    private fun setStateOfStopsButton(state: StopsButtonState) {
         // So far this method only changes the text of the button
         when (state) {
             StopsButtonState.ADD_NEW_STOP -> binding.btnStops.text = ADD_AS_STOP
             StopsButtonState.REMOVE_A_STOP -> binding.btnStops.text = REMOVE_FROM_STOPS
         }
+    }
+
+    /**
+     * Sets the text of stops counter according to the size of stopsHashMap
+     */
+    fun setStopsCounterText(hashMap: LinkedHashMap<Point, CarmenFeature>) {
+        binding.tvCurrentStopsCounter.text = hashMap.size.toString()
     }
 
     fun setCurrentCarmenFeature(currentCarmenFeature: CarmenFeature, currentCarmenFeatureGeometry: Point) {
@@ -131,12 +135,11 @@ class BottomSheetManager: ConstraintLayout {
      * and updates the state of the *stopsButton* accordingly
      */
     fun refreshStateOfStopsButton(stopsHashMap: LinkedHashMap<Point, CarmenFeature>?) {
-        Timber.d("--kalesame thn refreshStateOfStopsButton()--")
         stopsHashMap?.let {
             if (it.containsKey(currentCarmenFeatureGeometry)) {
-                changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
+                setStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
             } else {
-                changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
+                setStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
             }
         }
     }
@@ -168,7 +171,7 @@ class BottomSheetManager: ConstraintLayout {
                     )
 
                     // Change the stopsButton's text
-                    changeStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
+                    setStateOfStopsButton(StopsButtonState.REMOVE_A_STOP)
                 }
                 REMOVE_FROM_STOPS -> {
                     Timber.d("addStopsButtonOnClickListener() called, case remove from stops")
@@ -185,7 +188,7 @@ class BottomSheetManager: ConstraintLayout {
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
 
                     // Change the stopsButton's text
-                    changeStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
+                    setStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
                 }
                 else -> { /* There should not be another case */ }
             }
@@ -196,7 +199,7 @@ class BottomSheetManager: ConstraintLayout {
      * Will decide if "Optimize" button will be shown.
      * If there are >=2 stops it will, else it will not.
      */
-    private fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
+    fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
         Timber.d("decideOptimizeButtonVisibility() called")
         if (hashMap.size < 2) {
             Timber.d("decideOptimizeButtonVisibility() --> hashMap.size < 2")
@@ -209,21 +212,17 @@ class BottomSheetManager: ConstraintLayout {
 
 
     /**
-     * This method solves a UI bug that made the bottom sheet appear
-     * incorrectly and is intended to run only the first time it expands.
+     * This method solves a UI bug that made the bottom sheet appear incorrectly when expanded
      */
-    private fun redesignOnFirstExpand() {
+    private fun redesignWhenExpanded() {
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 when (newState) {
                     BottomSheetBehavior.STATE_EXPANDED -> {
                         bottomSheet.post {
-                            if (!hasAlreadyBeenShown) {
-                                //workaround for the bottomsheet  bug
-                                bottomSheet.requestLayout()
-                                //bottomSheet.invalidate() // Seems to have no effect
-                                hasAlreadyBeenShown = true
-                            }
+                            //workaround for the when the bottomsheet expands with incorrect UI
+                            bottomSheet.requestLayout()
+                            //bottomSheet.invalidate() // Seems to have no effect
                         }
                     }
                     else -> {/* No action */}
@@ -310,5 +309,17 @@ class BottomSheetManager: ConstraintLayout {
                 Timber.d("Error: %s", t.message)
             }
         })
+    }
+
+    private fun addClearButtonOnClickListener() {
+        binding.btnClear.setOnClickListener {
+            val dialog = MaterialAlertDialogBuilder(context, R.style.MaterialAlertDialog_rounded)
+                .setMessage(R.string.clear_every_stop_txt)
+                .setPositiveButton(R.string.yes) { dialog, _ -> symbolsManagerInterface.clearMapData() }
+                .setNegativeButton(R.string.no) { dialog, _ -> dialog.dismiss() }
+                .setCancelable(true)
+
+            dialog.show()
+        }
     }
 }

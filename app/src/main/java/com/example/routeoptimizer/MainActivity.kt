@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PointF
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,10 +39,7 @@ import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.plugins.annotation.OnSymbolClickListener
-import com.mapbox.mapboxsdk.plugins.annotation.Symbol
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
+import com.mapbox.mapboxsdk.plugins.annotation.*
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete
 import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions
 import com.mapbox.mapboxsdk.style.expressions.Expression
@@ -70,7 +68,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val symbolIconId = "symbolIconId" // Maybe won't be used, should delete?
     private val RED_MARKER = "RED_MARKER" // Corresponds to locations that are searched but not added in stopsHashMap
     private val BLUE_MARKER = "BLUE_MARKER" // Corresponds to locations added in stopsHashMap
-    private var latestSearchedLocationSymbol: Symbol? = null// Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
+    private var latestSearchedLocationSymbol: Symbol? = null // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private lateinit var symbolManager: SymbolManager // SymbolManager to add/remove symbols on the map
 
     // variables for adding search functionality
@@ -87,7 +85,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("--onCreate()--")
         // Initialize Timber for logging
         if (BuildConfig.DEBUG) { Timber.plant(DebugTree()) }
 
@@ -125,6 +122,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             initSymbolLayer(style)
 
             // Set up a layer to display the optimized route's line
+            setUpOptimizedRouteSource(style)
             initOptimizedRouteLineLayer(style)
 
             // Set up a layer to display arrows on the optimized route's line
@@ -255,8 +253,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         ))
     }
 
-    private fun initOptimizedRouteLineLayer(loadedMapStyle: Style) {
+    private fun setUpOptimizedRouteSource(loadedMapStyle: Style) {
         loadedMapStyle.addSource(GeoJsonSource(OPTIMIZED_ROUTE_SOURCE_ID))
+    }
+
+    private fun initOptimizedRouteLineLayer(loadedMapStyle: Style) {
         loadedMapStyle.addLayerBelow(
             LineLayer(OPTIMIZED_ROUTE_LAYER_ID, OPTIMIZED_ROUTE_SOURCE_ID)
                 .withProperties(
@@ -324,7 +325,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 binding.bottomSheetView.setCurrentCarmenFeature(carmenFeatureOfSelectedSymbol!!, symbol.geometry)
 
                 // Update place name in bottom sheet
-                binding.bottomSheetView.changePlaceNameText(carmenFeatureOfSelectedSymbol.placeName())
+                binding.bottomSheetView.setPlaceNameText(carmenFeatureOfSelectedSymbol.placeName())
 
                 // Update the text of stopsButton
                 binding.bottomSheetView.refreshStateOfStopsButton(DataRepository.stopsHashMap)
@@ -335,13 +336,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             true
         })
     }
-//
-//
+
+
     override fun deleteSymbolFromMap(symbol: Symbol) {
         symbolManager.delete(symbol)
     }
-//
-//
+
+    override fun clearMapData() {
+        mapboxMap.style?.let {
+
+            // Delete every symbol
+            symbolManager.deleteAll()
+
+            // Delete optimized route line (along with its arrows)
+            val optimizedSource = it.getSourceAs<GeoJsonSource>(OPTIMIZED_ROUTE_SOURCE_ID)
+            optimizedSource?.setGeoJson(FeatureCollection.fromFeatures(ArrayList<Feature>()))
+
+            // Empty stopsHashMap
+            DataRepository.stopsHashMap.clear()
+
+            // Hide bottom sheet
+            binding.bottomSheetView.changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN)
+        }
+    }
+
     override fun createSymbolInMap(selectedCarmenFeature: CarmenFeature, iconImageString: String): Symbol {
         // This class uses "symbolManager" and requires it to be initialized.
 
@@ -353,15 +371,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 .withLatLng(LatLng((selectedCarmenFeature.geometry() as Point?)!!.latitude(),
                         (selectedCarmenFeature.geometry() as Point?)!!.longitude()))
                 .withIconImage(iconImageString)
-//                .withTextField(counter.toString())
-//                .withTextAnchor(Property.TEXT_ANCHOR_BOTTOM)
-//                .withTextJustify(Property.TEXT_JUSTIFY_AUTO) // Effects text over 1 char
-//                .withTextColor("white")
-//                .withTextHaloColor("black")
-//                .withTextHaloWidth(1.0f)
-//                .withTextHaloBlur(0.25f)
-//                .withTextSize(20.0f)
-//                .withTextOffset(arrayOf(0f, -.05f))
                 .withIconSize(iconSize)
 
         // Use the manager to draw the symbol
@@ -385,7 +394,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         symbol.textSize = textSize
         symbolManager.update(symbol)
     }
-//
+
     private fun resetIconSizeInBlueMarkers() {
         for (i in 0 until symbolManager.annotations.size()) {
             val currentSymbol = symbolManager.annotations.valueAt(i)
@@ -458,13 +467,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER)
 
         // Update place name in bottom sheet
-        binding.bottomSheetView.changePlaceNameText(feature.placeName())
+        binding.bottomSheetView.setPlaceNameText(feature.placeName())
 
         // Notify the bottom sheet about its new currentCarmenFeature
         binding.bottomSheetView.setCurrentCarmenFeature(feature, (feature.geometry() as Point))
 
         // Refresh the state of bottom sheet's stopsButton
         binding.bottomSheetView.refreshStateOfStopsButton(DataRepository.stopsHashMap)
+
+        // Refresh the stops counter
+        binding.bottomSheetView.setStopsCounterText(DataRepository.stopsHashMap)
+
+        // Refresh optimize button
+        binding.bottomSheetView.decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
         // Reveal bottom sheet
         binding.bottomSheetView.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
@@ -477,13 +492,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
      * @param route The DirectionsRoute object which has the optimized route.
      */
     override fun drawOptimizedRoute(route: DirectionsRoute) {
-        Timber.d("----- INSIDE drawOptimizedRoute ------")
         mapboxMap.getStyle { style ->
-            Timber.d("----- INSIDE onStyleLoaded ------")
             val optimizedLineSource = style.getSourceAs<GeoJsonSource>(OPTIMIZED_ROUTE_SOURCE_ID)
-            Timber.d("----- before if ------")
             if (optimizedLineSource != null) {
-                Timber.d("----- inside if ------")
                 optimizedLineSource.setGeoJson(FeatureCollection.fromFeature(Feature.fromGeometry(
                     LineString.fromPolyline(route.geometry()!!, Constants.PRECISION_6))))
             }
@@ -500,7 +511,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
         for (i in 0 until symbolManager.annotations.size()) {
             val currentSymbol = symbolManager.annotations.valueAt(i)
+
             if (currentSymbol.iconImage == BLUE_MARKER) {
+
                 // Decide which number to show on current symbol based on its latitude-longitude
                 val waypointIndex = DataRepository.getWaypointIndexByLatLng(waypoints, currentSymbol.latLng)
 
@@ -560,7 +573,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
      	// Bug 1: H symbolExists tha mporouse na paei mesa sthn performActionsOnSearchResult, alla einai brwmia!
         // Epishs tha mporouse na elegthei kai allou (se allo shmeio tou kwdika, hmoun kommatia otan to egrafa lel)
         // Bug 2: Den fainetai h piksida kapoies fores
-        // Bug 3: Otan to bottomSheet einai katebasmeno kai psaxneis topothesia den shkwnetai kala. Logika arkei
-        // na baleis to invalidate na ginetai panta anti gia mono thn 1h fora!
+        //
+        // - Mporeis na valeis ton stopsHashMap sto MainActivityViewModel, na ton kaneis observe kai na baleis ekei
+        // osa actions xreiazontai!
      */
 }
