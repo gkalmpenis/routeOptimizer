@@ -1,13 +1,11 @@
 package com.example.routeoptimizer
 
-//import com.example.routeoptimizer.BottomSheetManager
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PointF
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,10 +22,7 @@ import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.geocoding.v5.models.CarmenFeature
 import com.mapbox.api.optimization.v1.models.OptimizationWaypoint
 import com.mapbox.core.constants.Constants
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
+import com.mapbox.geojson.*
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
@@ -79,7 +74,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val OPTIMIZED_ROUTE_SOURCE_ID = "optimized-route-source-id"
     private val OPTIMIZED_ROUTE_LAYER_ID = "optimized-route-layer-id"
     private val ROUTE_ARROWS_LAYER_ID = "route-arrows-layer-id"
-    private var counter = 0 //DELETE THIS!
 
     private lateinit var binding: ActivityMainBinding
 
@@ -365,7 +359,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
         // Specify symbol size for the markers, to make them have approx. the same size
         val iconSize = specifyIconSize(iconImageString)
-        counter++ // FOR DEBUG, DELETE!
+
         // Create a symbol at the specified location.
         val symbolOptions = SymbolOptions()
                 .withLatLng(LatLng((selectedCarmenFeature.geometry() as Point?)!!.latitude(),
@@ -376,7 +370,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         // Use the manager to draw the symbol
         return symbolManager.create(symbolOptions)
     }
-//
+
+    private fun getSymbolByGeometry(geometry: Geometry): Symbol? {
+        symbolManager.annotations.forEach { key, value -> if (value.geometry == geometry) return value }
+        return null
+    }
+
     private fun specifyIconSize(iconImageString: String): Float {
         if (iconImageString == RED_MARKER) {
             return SymbolsManagerInterface.RED_MARKER_ORIGINAL_ICON_SIZE
@@ -435,23 +434,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     private fun addMapLongClickListener() {
         mapboxMap.addOnMapLongClickListener { point ->
-            // If a symbol already exists there do nothing. This was causing the app to crash
-            if (!symbolExists(point)) {
-                ReverseGeocoderUtil.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
-            }
+            ReverseGeocoderUtil.reverseGeocode(this, Point.fromLngLat(point.longitude, point.latitude))
             true
         }
-    }
-
-    private fun symbolExists(point: LatLng): Boolean {
-        symbolManager.annotations.forEach { key, value ->
-            if (value.latLng.latitude in point.latitude.minus(.00005)..point.latitude.plus(.00005)
-                && value.latLng.longitude in point.longitude.minus(.00005)..point.longitude.plus(.00005)) {
-                return true
-            }
-        }
-
-        return false
     }
 
     fun performActionsOnSearchResult(feature: CarmenFeature) {
@@ -463,8 +448,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         // Reset all blue markers to their original size, so they do not look like they are selected
         resetIconSizeInBlueMarkers()
 
-        // Create a symbol for that location and set it as the latest searched location symbol
-        latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER)
+        // Create a symbol for that location if not exists and set it as the latest searched location symbol
+        if (DataRepository.stopsHashMap.containsKey(feature.geometry())) {
+            val existingSymbol = getSymbolByGeometry(feature.geometry()!!)
+
+            latestSearchedLocationSymbol = existingSymbol
+
+            // Since the stops exist its symbol should also exist, so expand its marker
+            changeIconAndTextSize(
+                existingSymbol!!,
+                SymbolsManagerInterface.BLUE_MARKER_EXPANDED_ICON_SIZE,
+                SymbolsManagerInterface.BLUE_MARKER_EXPANDED_TEXT_SIZE
+            )
+        } else {
+            latestSearchedLocationSymbol = createSymbolInMap(feature, RED_MARKER)
+        }
 
         // Update place name in bottom sheet
         binding.bottomSheetView.setPlaceNameText(feature.placeName())
@@ -570,9 +568,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     /*
     TODO
-     	// Bug 1: H symbolExists tha mporouse na paei mesa sthn performActionsOnSearchResult, alla einai brwmia!
-        // Epishs tha mporouse na elegthei kai allou (se allo shmeio tou kwdika, hmoun kommatia otan to egrafa lel)
-        // Bug 2: Den fainetai h piksida kapoies fores
+     	// Bug 1: Den fainetai h piksida kapoies fores
         //
         // - Mporeis na valeis ton stopsHashMap sto MainActivityViewModel, na ton kaneis observe kai na baleis ekei
         // osa actions xreiazontai!

@@ -51,7 +51,7 @@ class BottomSheetManager: ConstraintLayout {
     private lateinit var activity: Activity // Is it needed? If yes, it can be set inside initValues()
 //
     private lateinit var binding: BottomSheetPersistentBinding
-//    //    private lateinit var bottomSheetView: View // Should be replaced with "this" . DELETE when done!
+    //    private lateinit var bottomSheetView: View // Should be replaced with "this" . DELETE when done!
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
 
     private lateinit var mainActivityViewModel: MainActivityViewModel
