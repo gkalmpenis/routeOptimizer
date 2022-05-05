@@ -572,5 +572,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         //
         // - Mporeis na valeis ton stopsHashMap sto MainActivityViewModel, na ton kaneis observe kai na baleis ekei
         // osa actions xreiazontai!
+        // - Na baleis diarkeia taksidiou kai xlm apostash
      */
 }

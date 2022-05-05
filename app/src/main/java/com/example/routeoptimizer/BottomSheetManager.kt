@@ -187,6 +187,9 @@ class BottomSheetManager: ConstraintLayout {
                     // Update the marker in that location. It should have been blue, make it red
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
 
+                    // Remove text of the previous blue marker (if existed)
+                    symbolsManagerInterface.getLatestSearchedSymbol()!!.textField = ""
+
                     // Change the stopsButton's text
                     setStateOfStopsButton(StopsButtonState.ADD_NEW_STOP)
                 }
