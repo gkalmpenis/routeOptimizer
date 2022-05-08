@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/bottomSheet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -52,6 +53,50 @@
         app:layout_constraintTop_toBottomOf="@+id/topStraightLine"
         app:layout_constraintVertical_bias="0.0" />
 
+    <TextView
+        android:id="@+id/tvTripDistanceText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/trip_distance_txt"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toStartOf="@id/tvTripDurationText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintTop_toBottomOf="@id/tvPlaceName" />
+
+    <TextView
+        android:id="@+id/tvTripDistanceValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/trip_distance_value"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toEndOf="@+id/tvTripDistanceText"
+        app:layout_constraintTop_toTopOf="@id/tvTripDistanceText" />
+
+    <TextView
+        android:id="@+id/tvTripDurationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/trip_duration_txt"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvTripDistanceText"
+        app:layout_constraintTop_toTopOf="@+id/tvTripDistanceText" />
+
+    <TextView
+        android:id="@+id/tvTripDurationValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/trip_duration_value"
+        android:textColor="@color/black"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/tvTripDurationText"
+        app:layout_constraintTop_toTopOf="@+id/tvTripDistanceText" />
+
     <Button
         android:id="@+id/btnStops"
         style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
@@ -65,7 +110,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.25"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvPlaceName"
+        app:layout_constraintTop_toBottomOf="@+id/tvTripDistanceText"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView

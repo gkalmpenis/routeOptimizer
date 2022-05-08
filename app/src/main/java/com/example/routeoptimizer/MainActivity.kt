@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PointF
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -440,6 +441,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     fun performActionsOnSearchResult(feature: CarmenFeature) {
+        // Hide trip distance and duration views
+        binding.bottomSheetView.setVisibilityOfDistanceAndDuration(View.GONE)
+
         // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
         if (latestSearchedLocationSymbol?.iconImage == RED_MARKER) {
             deleteSymbolFromMap(latestSearchedLocationSymbol!!)

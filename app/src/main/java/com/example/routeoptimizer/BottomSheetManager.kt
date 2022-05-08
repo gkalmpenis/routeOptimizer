@@ -22,6 +22,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 
 /*
@@ -42,7 +44,6 @@ class BottomSheetManager: ConstraintLayout {
     constructor(context: Context, attrSet: AttributeSet, defStyleAttr: Int): super (context, attrSet, defStyleAttr)
 
     init {
-        Timber.d("--Kaloume thn init tou bottomSheetManager--")
         binding = BottomSheetPersistentBinding.inflate(LayoutInflater.from(context), this, true)
     }
 //
@@ -284,8 +285,8 @@ class BottomSheetManager: ConstraintLayout {
                                 Timber.d("----- 5. ------")
                                 // Get most optimized route from API response
                                 optimizedRoute = routes[0]
-//                                val duration = routes[0].duration() // duration in seconds
-//                                val distance = routes[0].distance() // distance in meters
+                                val distance = routes[0].distance() // distance in meters
+                                val duration = routes[0].duration() // duration in seconds
                                 Timber.d("\tNow will show the order of the waypoints")
                                 for (w in response.body()!!.waypoints()!!) {
                                     Timber.d("\t\t---------------------")
@@ -298,6 +299,10 @@ class BottomSheetManager: ConstraintLayout {
                                 routeOptimizationInterface.drawOptimizedRoute(optimizedRoute)
                                 Timber.d("----- BEFORE UPDATE OF SYMBOL ICON NUMBERS ------")
                                 symbolsManagerInterface.updateNumberInSymbolIcons(response.body()!!.waypoints()!!)
+                                Timber.d("----- BEFORE UPDATE OF TRIP DISTANCE AND DURATION ------")
+                                setTripDistance(distance)
+                                setTripDuration(duration)
+                                setVisibilityOfDistanceAndDuration(View.VISIBLE)
                             }
                         } else {
                             Timber.d("----- 6. ------")
@@ -312,6 +317,35 @@ class BottomSheetManager: ConstraintLayout {
                 Timber.d("Error: %s", t.message)
             }
         })
+    }
+
+    private fun setTripDistance(distance: Double?) {
+        distance?.let {
+            binding.tvTripDistanceValue.text = String.format("%.2f km", it*0.001)
+        }
+    }
+
+    private fun setTripDuration(duration: Double?) {
+        duration?.let {
+            val convertedDuration = it.toDuration(DurationUnit.SECONDS)
+            val timeString = when (it) {
+                in 0f..3600f -> convertedDuration.toComponents { minutes, seconds, nanoseconds ->
+                    String.format("%02d:%02d", minutes, seconds)
+                }
+                else -> convertedDuration.toComponents { hours, minutes, seconds, nanoseconds ->
+                    String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                }
+            }
+
+            binding.tvTripDurationValue.text = timeString
+        }
+    }
+
+    fun setVisibilityOfDistanceAndDuration(visibility: Int) {
+        binding.tvTripDistanceText.visibility = visibility
+        binding.tvTripDistanceValue.visibility = visibility
+        binding.tvTripDurationText.visibility = visibility
+        binding.tvTripDurationValue.visibility = visibility
     }
 
     private fun addClearButtonOnClickListener() {

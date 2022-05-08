@@ -12,6 +12,10 @@
     <string name="clear_every_stop_txt">Clear every stop?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="trip_distance_txt">Distance</string>
+    <string name="trip_distance_value">0</string>
+    <string name="trip_duration_txt">Duration</string>
+    <string name="trip_duration_value">0</string>
 
     <!-- Errors -->
     <string name="user_location_permission_explanation">This app needs location permissions to show its functionality.</string>
