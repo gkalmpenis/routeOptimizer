@@ -122,8 +122,12 @@ class BottomSheetManager: ConstraintLayout {
     /**
      * Sets the text of stops counter according to the size of stopsHashMap
      */
-    fun setStopsCounterText(hashMap: LinkedHashMap<Point, CarmenFeature>) {
-        binding.tvCurrentStopsCounter.text = hashMap.size.toString()
+//    fun setStopsCounterText(hashMap: LinkedHashMap<Point, CarmenFeature>) {
+//        binding.tvCurrentStopsCounter.text = hashMap.size.toString()
+//    }
+
+    fun setStopsCounterText(text: String) {
+        binding.tvCurrentStopsCounter.text = text
     }
 
     fun setCurrentCarmenFeature(currentCarmenFeature: CarmenFeature, currentCarmenFeatureGeometry: Point) {
@@ -156,10 +160,11 @@ class BottomSheetManager: ConstraintLayout {
                     // Add the manager's currently shown CarmenFeature in MainActivity's HashMap
                     Timber.d("--Vazoume stop ston hashmap--")
                     DataRepository.stopsHashMap[currentCarmenFeatureGeometry!!] = currentCarmenFeature!!
+                    mainActivityViewModel.addToTestHashMap(currentCarmenFeatureGeometry!!, currentCarmenFeature!!)
 
                     // Update the current stops counter
-                    Timber.d("--kanoume update ton counter--")
-                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
+//                    Timber.d("--kanoume update ton counter--")
+//                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
 
                     decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
@@ -179,9 +184,10 @@ class BottomSheetManager: ConstraintLayout {
 
                     // Remove the selectedCarmenFeature from the HashMap
                     DataRepository.stopsHashMap.remove(currentCarmenFeatureGeometry!!)
+                    mainActivityViewModel.removeFromHashMap(currentCarmenFeatureGeometry!!)
 
-                    // Update the current stops counter
-                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
+//                    // Update the current stops counter
+//                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
 
                     decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 

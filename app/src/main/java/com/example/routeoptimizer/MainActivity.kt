@@ -96,6 +96,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
         // Initialize the bottom sheet manager
         binding.bottomSheetView.initValues(this, mainActivityViewModel)
+
+        // observe testHashMap and show dialog every time something is inserted
+        mainActivityViewModel.testHashMapLive.observe(this) {
+            binding.bottomSheetView.setStopsCounterText(it.size.toString())
+        }
     }
 
     override fun onMapReady(mapboxMap: MapboxMap) {
@@ -478,7 +483,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         binding.bottomSheetView.refreshStateOfStopsButton(DataRepository.stopsHashMap)
 
         // Refresh the stops counter
-        binding.bottomSheetView.setStopsCounterText(DataRepository.stopsHashMap)
+//        binding.bottomSheetView.setStopsCounterText(DataRepository.stopsHashMap)
 
         // Refresh optimize button
         binding.bottomSheetView.decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
