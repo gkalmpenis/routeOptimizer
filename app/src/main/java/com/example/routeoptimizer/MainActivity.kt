@@ -97,10 +97,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         // Initialize the bottom sheet manager
         binding.bottomSheetView.initValues(this, mainActivityViewModel)
 
-        // observe testHashMap and show dialog every time something is inserted
-        mainActivityViewModel.testHashMapLive.observe(this) {
-            binding.bottomSheetView.setStopsCounterText(it.size.toString())
-        }
+        // observe stopsHashMap
+        initViewModelObservers()
     }
 
     override fun onMapReady(mapboxMap: MapboxMap) {
@@ -227,7 +225,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 .build(this@MainActivity)
             resultLauncher.launch(intent)
         }
-//        }
     }
 
 
@@ -242,7 +239,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         symbolManager.iconAllowOverlap = true
         symbolManager.textAllowOverlap = true
     }
-//
+
     private fun initSymbolLayer(loadedMapStyle: Style) {
         loadedMapStyle.addLayer(SymbolLayer(SYMBOL_LAYER_ID,
                 geojsonSourceLayerId).withProperties(
@@ -296,9 +293,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             ), OPTIMIZED_ROUTE_LAYER_ID)
     }
 
-//    /**
-//     * Adds a listener on **every** symbol (also called *annotation*) that will be created.
-//     */
+    /**
+     * Adds a listener on **every** symbol (also called *annotation*) that will be created.
+     */
     private fun addAnnotationClickListener() {
         symbolManager.addClickListener(OnSymbolClickListener { symbol ->
             // Currently there is functionality only for clicking blue markers, clicking on a red symbol will have no effect.
@@ -321,14 +318,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 latestSearchedLocationSymbol = symbol
 
                 // Get CarmenFeature from geometry. The symbol was blue so the location exists in stopsHashMap
-                val carmenFeatureOfSelectedSymbol = DataRepository.stopsHashMap[symbol.geometry]
+//                val carmenFeatureOfSelectedSymbol = DataRepository.stopsHashMap[symbol.geometry]
+                val carmenFeatureOfSelectedSymbol = mainActivityViewModel.stopsHashMap[symbol.geometry]
                 binding.bottomSheetView.setCurrentCarmenFeature(carmenFeatureOfSelectedSymbol!!, symbol.geometry)
 
                 // Update place name in bottom sheet
                 binding.bottomSheetView.setPlaceNameText(carmenFeatureOfSelectedSymbol.placeName())
 
                 // Update the text of stopsButton
-                binding.bottomSheetView.refreshStateOfStopsButton(DataRepository.stopsHashMap)
+                binding.bottomSheetView.refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap)
 
                 // Reveal bottom sheet. Will work even if it is already in "STATE_EXPANDED"
                 binding.bottomSheetView.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
@@ -353,7 +351,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             optimizedSource?.setGeoJson(FeatureCollection.fromFeatures(ArrayList<Feature>()))
 
             // Empty stopsHashMap
-            DataRepository.stopsHashMap.clear()
+            mainActivityViewModel.clearStopsHashMap()
 
             // Hide bottom sheet
             binding.bottomSheetView.changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN)
@@ -433,7 +431,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         }
     }
 
-
     override fun getLatestSearchedSymbol(): Symbol? {
         return latestSearchedLocationSymbol
     }
@@ -446,7 +443,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     fun performActionsOnSearchResult(feature: CarmenFeature) {
-        // Hide trip distance and duration views
+        // Hide trip distance and duration views because they might were visible
         binding.bottomSheetView.setVisibilityOfDistanceAndDuration(View.GONE)
 
         // Make sure we have no red marker leftover (which means the location was searched) from the previous search query
@@ -458,12 +455,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         resetIconSizeInBlueMarkers()
 
         // Create a symbol for that location if not exists and set it as the latest searched location symbol
-        if (DataRepository.stopsHashMap.containsKey(feature.geometry())) {
+//        if (DataRepository.stopsHashMap.containsKey(feature.geometry())) {
+        if (mainActivityViewModel.stopsHashMap.containsKey(feature.geometry())) {
             val existingSymbol = getSymbolByGeometry(feature.geometry()!!)
 
             latestSearchedLocationSymbol = existingSymbol
 
-            // Since the stops exist its symbol should also exist, so expand its marker
+            // Since the stop exists its symbol should also exist, so expand its marker
             changeIconAndTextSize(
                 existingSymbol!!,
                 SymbolsManagerInterface.BLUE_MARKER_EXPANDED_ICON_SIZE,
@@ -480,13 +478,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         binding.bottomSheetView.setCurrentCarmenFeature(feature, (feature.geometry() as Point))
 
         // Refresh the state of bottom sheet's stopsButton
-        binding.bottomSheetView.refreshStateOfStopsButton(DataRepository.stopsHashMap)
-
-        // Refresh the stops counter
-//        binding.bottomSheetView.setStopsCounterText(DataRepository.stopsHashMap)
-
-        // Refresh optimize button
-        binding.bottomSheetView.decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
+        binding.bottomSheetView.refreshStateOfStopsButton(mainActivityViewModel.stopsHashMap)
 
         // Reveal bottom sheet
         binding.bottomSheetView.changeBottomSheetState(BottomSheetBehavior.STATE_EXPANDED)
@@ -538,6 +530,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         }
     }
 
+    private fun initViewModelObservers() {
+        mainActivityViewModel.stopsHashMapLive.observe(this) {
+            // This runs only after a change occurs in stopsHashMapLive
+
+            // Refresh the stops counter
+            binding.bottomSheetView.setStopsCounterText(it.size.toString())
+
+            // Refresh optimize button
+            binding.bottomSheetView.decideOptimizeButtonVisibility(it.size)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         binding.mapView.onStart()
@@ -575,12 +579,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         binding.mapView.onDestroy()
     }
 
-    /*
-    TODO
-     	// Bug 1: Den fainetai h piksida kapoies fores
-        //
-        // - Mporeis na valeis ton stopsHashMap sto MainActivityViewModel, na ton kaneis observe kai na baleis ekei
-        // osa actions xreiazontai!
-        // - Na baleis diarkeia taksidiou kai xlm apostash
-     */
+    // TODO: General cleanup and move the top text in BottomSheetManager in a txt file to remember it
+    // when you read it sometime in the future.
 }

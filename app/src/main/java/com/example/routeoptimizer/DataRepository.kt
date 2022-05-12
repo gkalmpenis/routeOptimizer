@@ -6,26 +6,12 @@ import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 
 object DataRepository {
-    // LinkedHashMap that will contain locations that user adds as stop
-    val stopsHashMap = LinkedHashMap<Point, CarmenFeature>()
     val alreadyCheckedWaypoints = mutableListOf<Int>() // List that indicates which Waypoints should not be checked because they already where
-
-    /**
-     * This method converts each *CarmenFeature* in **stopsHashMap** to a *Point*.
-     *
-     * @return A list of *Point* objects that correspond to each element in **stopsHashMap**
-     */
-    fun convertStopsToPoints(hashMap: LinkedHashMap<Point, CarmenFeature>): List<Point> {
-        val coordinates: MutableList<Point> = ArrayList()
-        for (point in hashMap.keys) {
-            coordinates.add(point)
-        }
-        return coordinates
-    }
 
     fun getWaypointIndexByLatLng(waypoints: List<OptimizationWaypoint>, latLng: LatLng): Int? {
         // Since waypoints always have slightly different coordinates than user selected locations,
-        // we will obtain them in approximation within a radius eg. 00.0000 - 00.0006 (+-3)
+        // we will obtain them in approximation within a radius eg. 00.0000 - 00.0006 (+-3).
+        // Do not place a large radius otherwise the correctness of the order will be affected.
 
         val precisionRadius = .0006
 
@@ -41,11 +27,7 @@ object DataRepository {
             }
 
         // If there is no match in the specified radius return null.
-        // It can happen in locations far away from the road, like mountains.
+        // It can happen in locations slightly away from the road, like mountains, but can also happen in city buildings.
         return null
     }
-
-    // Exe kata nou pws an bgeis apthn efarmogh kai ksanampeis (xwris na thn kleiseis)
-    // tha meinoun ta data ston stopsHashMap opote prepei na paikseis m auto
-    // (mporeis na ton adeiaseis sto ondestroy alla idanika ftiaksto me livedata sto viewmodel)
 }

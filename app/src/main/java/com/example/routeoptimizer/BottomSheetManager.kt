@@ -82,7 +82,7 @@ class BottomSheetManager: ConstraintLayout {
 
         changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN) // Do not reveal bottom sheet on creation of the application.
 
-        decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
+//        decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
         // Initialize listeners
         setOnClickListener()
@@ -113,15 +113,16 @@ class BottomSheetManager: ConstraintLayout {
 
     private fun setStateOfStopsButton(state: StopsButtonState) {
         // So far this method only changes the text of the button
+
         when (state) {
             StopsButtonState.ADD_NEW_STOP -> binding.btnStops.text = ADD_AS_STOP
             StopsButtonState.REMOVE_A_STOP -> binding.btnStops.text = REMOVE_FROM_STOPS
         }
     }
 
-    /**
-     * Sets the text of stops counter according to the size of stopsHashMap
-     */
+//    /**
+//     * Sets the text of stops counter according to the size of stopsHashMap
+//     */
 //    fun setStopsCounterText(hashMap: LinkedHashMap<Point, CarmenFeature>) {
 //        binding.tvCurrentStopsCounter.text = hashMap.size.toString()
 //    }
@@ -150,23 +151,20 @@ class BottomSheetManager: ConstraintLayout {
     }
 
     private fun addStopsButtonOnClickListener() {
-        Timber.d("--mphkame sto addStopsButtonOnClickListener--")
         binding.btnStops.setOnClickListener {
-            Timber.d("--mphkame sto binding.btnStops.setOnClickListener--")
             when (binding.btnStops.text) {
                 ADD_AS_STOP -> {
                     Timber.d("addStopsButtonOnClickListener() called, case add as stop")
 
-                    // Add the manager's currently shown CarmenFeature in MainActivity's HashMap
-                    Timber.d("--Vazoume stop ston hashmap--")
-                    DataRepository.stopsHashMap[currentCarmenFeatureGeometry!!] = currentCarmenFeature!!
-                    mainActivityViewModel.addToTestHashMap(currentCarmenFeatureGeometry!!, currentCarmenFeature!!)
+                    // Add the manager's currently shown CarmenFeature in stopsHashMap
+//                    DataRepository.stopsHashMap[currentCarmenFeatureGeometry!!] = currentCarmenFeature!!
+                    mainActivityViewModel.addToStopsHashMap(currentCarmenFeatureGeometry!!, currentCarmenFeature!!)
 
                     // Update the current stops counter
 //                    Timber.d("--kanoume update ton counter--")
 //                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
 
-                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
+//                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
                     // Update the marker in that location. It should have been red, make it blue
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
@@ -183,13 +181,13 @@ class BottomSheetManager: ConstraintLayout {
                     Timber.d("addStopsButtonOnClickListener() called, case remove from stops")
 
                     // Remove the selectedCarmenFeature from the HashMap
-                    DataRepository.stopsHashMap.remove(currentCarmenFeatureGeometry!!)
-                    mainActivityViewModel.removeFromHashMap(currentCarmenFeatureGeometry!!)
+//                    DataRepository.stopsHashMap.remove(currentCarmenFeatureGeometry!!)
+                    mainActivityViewModel.removeFromStopsHashMap(currentCarmenFeatureGeometry!!)
 
 //                    // Update the current stops counter
 //                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
 
-                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
+//                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
                     // Update the marker in that location. It should have been blue, make it red
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
@@ -207,15 +205,13 @@ class BottomSheetManager: ConstraintLayout {
 
     /**
      * Will decide if "Optimize" button will be shown.
-     * If there are >=2 stops it will, else it will not.
+     * If stopsHashMap contains >=2 stops it will, else it will not.
      */
-    fun decideOptimizeButtonVisibility(hashMap: LinkedHashMap<Point, CarmenFeature>) {
+    fun decideOptimizeButtonVisibility(hashMapSize: Int) {
         Timber.d("decideOptimizeButtonVisibility() called")
-        if (hashMap.size < 2) {
-            Timber.d("decideOptimizeButtonVisibility() --> hashMap.size < 2")
+        if (hashMapSize < 2) {
             binding.btnOptimize.visibility = View.GONE
         } else {
-            Timber.d("decideOptimizeButtonVisibility() --> hashMap.size >= 2")
             binding.btnOptimize.visibility = View.VISIBLE
         }
     }
@@ -245,10 +241,12 @@ class BottomSheetManager: ConstraintLayout {
 
     private fun addOptimizeButtonOnClickListener() {
         binding.btnOptimize.setOnClickListener {
-            if (DataRepository.stopsHashMap.size > 12) {
+//            if (DataRepository.stopsHashMap.size > 12) {
+            if (mainActivityViewModel.getStopsHashMapSize() > 12) {
                 Toast.makeText(context, R.string.only_twelve_stops_allowed, Toast.LENGTH_LONG).show()
             } else {
-                val coordinates = DataRepository.convertStopsToPoints(DataRepository.stopsHashMap)
+//                val coordinates = DataRepository.convertStopsToPoints(DataRepository.stopsHashMap)
+                val coordinates = mainActivityViewModel.convertStopsToPoints(mainActivityViewModel.stopsHashMap)
                 //                Point firstPoint = coordinates.get(0);                      // The list of coordinates has at least two items because "optimizeButton" appears after two items have been inserted in stopsHashMap,
                 //                Point lastPoint = coordinates.get(coordinates.size() - 1);  // so we can safely obtain a firstPoint and lastPoint from them.
                 getOptimizedRoute(coordinates)
@@ -257,12 +255,11 @@ class BottomSheetManager: ConstraintLayout {
     }
 
     private fun getOptimizedRoute(coordinates: List<Point?>) {
-        Timber.d("----- BEFORE BUILD ------")
 
         // Build the optimized route
         optimizedClient = MapboxOptimization.builder()
-            .source(DirectionsCriteria.SOURCE_FIRST) // Probably first means the first element found in coordinates, which would be the first element inserted in stopsHashMap
-            .destination(DirectionsCriteria.DESTINATION_LAST) // Again, last probably means the last element found in coordinates. It's better to set "any" here.
+            .source(DirectionsCriteria.SOURCE_FIRST) // First means the first element found in coordinates, which would be the first element inserted in stopsHashMap
+            .destination(DirectionsCriteria.DESTINATION_LAST) // Last means the last element found in coordinates
             .coordinates(coordinates)
             .roundTrip(false)
             .overview(DirectionsCriteria.OVERVIEW_FULL)
@@ -270,48 +267,41 @@ class BottomSheetManager: ConstraintLayout {
 //            .steps(true) // Turn-by-turn instructions
             .accessToken(this.resources.getString(R.string.mapbox_access_token))
             .build()
-        Timber.d("----- AFTER BUILD ------")
+
         optimizedClient.enqueueCall(object : Callback<OptimizationResponse?> {
             override fun onResponse(call: Call<OptimizationResponse?>, response: Response<OptimizationResponse?>) {
-                Timber.d("----- INSIDE onResponse ------")
                 if (!response.isSuccessful) {
-                    Timber.d("----- 1. ------")
                     Toast.makeText(context, resources.getString(R.string.no_success), Toast.LENGTH_LONG).show()
                 } else {
                     if (response.body() != null) {
-                        Timber.d("----- 2. ------")
                         val routes = response.body()!!.trips()
                         if (routes != null) {
-                            Timber.d("----- 3. ------")
                             if (routes.isEmpty()) {
-                                Timber.d("----- 4. ------")
                                 Timber.d("%s size = %s", resources.getString(R.string.successful_but_no_routes), routes.size)
                                 Toast.makeText(context, resources.getString(R.string.successful_but_no_routes), Toast.LENGTH_SHORT).show()
                             } else {
-                                Timber.d("----- 5. ------")
                                 // Get most optimized route from API response
                                 optimizedRoute = routes[0]
                                 val distance = routes[0].distance() // distance in meters
                                 val duration = routes[0].duration() // duration in seconds
-                                Timber.d("\tNow will show the order of the waypoints")
-                                for (w in response.body()!!.waypoints()!!) {
-                                    Timber.d("\t\t---------------------")
-                                    Timber.d("\t\twaypoint index: ${w.waypointIndex()}")
-                                    Timber.d("\t\twaypoint name: ${w.name()}")
-                                    Timber.d("\t\twaypoint location: ${w.location()}")
-                                    Timber.d("\t\ttrips index: ${w.tripsIndex()}")
-                                }
-                                Timber.d("----- BEFORE DRAW ------")
+
+                                // Below snippet is for debug
+//                                Timber.d("\tOrder of the waypoints:")
+//                                for (w in response.body()!!.waypoints()!!) {
+//                                    Timber.d("\t\t---------------------")
+//                                    Timber.d("\t\twaypoint index: ${w.waypointIndex()}")
+//                                    Timber.d("\t\twaypoint name: ${w.name()}")
+//                                    Timber.d("\t\twaypoint location: ${w.location()}")
+//                                    Timber.d("\t\ttrips index: ${w.tripsIndex()}")
+//                                }
+                                Timber.d("Drawing the optimized route on map...")
                                 routeOptimizationInterface.drawOptimizedRoute(optimizedRoute)
-                                Timber.d("----- BEFORE UPDATE OF SYMBOL ICON NUMBERS ------")
                                 symbolsManagerInterface.updateNumberInSymbolIcons(response.body()!!.waypoints()!!)
-                                Timber.d("----- BEFORE UPDATE OF TRIP DISTANCE AND DURATION ------")
                                 setTripDistance(distance)
                                 setTripDuration(duration)
                                 setVisibilityOfDistanceAndDuration(View.VISIBLE)
                             }
                         } else {
-                            Timber.d("----- 6. ------")
                             Timber.d("List of routes in the response is null")
                             Toast.makeText(context, String.format(resources.getString(R.string.null_in_response), "The Optimization API response's body"), Toast.LENGTH_SHORT).show()
                         }
@@ -358,7 +348,7 @@ class BottomSheetManager: ConstraintLayout {
         binding.btnClear.setOnClickListener {
             val dialog = MaterialAlertDialogBuilder(context, R.style.MaterialAlertDialog_rounded)
                 .setMessage(R.string.clear_every_stop_txt)
-                .setPositiveButton(R.string.yes) { dialog, _ -> symbolsManagerInterface.clearMapData() }
+                .setPositiveButton(R.string.yes) { _, _ -> symbolsManagerInterface.clearMapData() }
                 .setNegativeButton(R.string.no) { dialog, _ -> dialog.dismiss() }
                 .setCancelable(true)
 
