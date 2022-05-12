@@ -517,7 +517,7 @@ class MainActivity : AppCompatActivity(),
                 // Decide which number to show on current symbol based on its latitude-longitude. Starts at 0
                 val waypointIndex = WaypointUtil.getWaypointIndexByLatLng(waypoints, currentSymbol.latLng)
 
-                currentSymbol.textField = waypointIndex?.let { (it + 1).toString() } ?: "?" // Better UX-wise to show "?" than to show "null"
+                currentSymbol.textField = waypointIndex?.let { (it + 1).toString() } ?: "" // Better UX-wise to show nothing than to show "null"
                 currentSymbol.textAnchor = Property.TEXT_ANCHOR_CENTER // Anchor of blue marker is its central circle
                 currentSymbol.textColor = "white"
                 currentSymbol.textHaloColor = "black"
