@@ -131,14 +131,7 @@ class BottomSheetManager: ConstraintLayout {
                     Timber.d("addStopsButtonOnClickListener() called, case add as stop")
 
                     // Add the manager's currently shown CarmenFeature in stopsHashMap
-//                    DataRepository.stopsHashMap[currentCarmenFeatureGeometry!!] = currentCarmenFeature!!
                     mainActivityViewModel.addToStopsHashMap(currentCarmenFeatureGeometry!!, currentCarmenFeature!!)
-
-                    // Update the current stops counter
-//                    Timber.d("--kanoume update ton counter--")
-//                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
-
-//                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
                     // Update the marker in that location. It should have been red, make it blue
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
@@ -155,13 +148,7 @@ class BottomSheetManager: ConstraintLayout {
                     Timber.d("addStopsButtonOnClickListener() called, case remove from stops")
 
                     // Remove the selectedCarmenFeature from the HashMap
-//                    DataRepository.stopsHashMap.remove(currentCarmenFeatureGeometry!!)
                     mainActivityViewModel.removeFromStopsHashMap(currentCarmenFeatureGeometry!!)
-
-//                    // Update the current stops counter
-//                    binding.tvCurrentStopsCounter.text = DataRepository.stopsHashMap.size.toString()
-
-//                    decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
                     // Update the marker in that location. It should have been blue, make it red
                     symbolsManagerInterface.switchSymbolIconInMap(symbolsManagerInterface.getLatestSearchedSymbol()!!)
