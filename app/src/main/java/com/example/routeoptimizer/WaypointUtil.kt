@@ -5,8 +5,8 @@ import com.mapbox.api.optimization.v1.models.OptimizationWaypoint
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 
-object DataRepository {
-    val alreadyCheckedWaypoints = mutableListOf<Int>() // List that indicates which Waypoints should not be checked because they already where
+object WaypointUtil {
+    val alreadyCheckedWaypoints = mutableListOf<Int>() // List that indicates which Waypoints should not be checked because they already were
 
     fun getWaypointIndexByLatLng(waypoints: List<OptimizationWaypoint>, latLng: LatLng): Int? {
         // Since waypoints always have slightly different coordinates than user selected locations,

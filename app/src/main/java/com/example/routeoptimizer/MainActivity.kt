@@ -48,11 +48,11 @@ import timber.log.Timber
 import timber.log.Timber.DebugTree
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListener, SymbolsManagerInterface, RouteOptimizationInterface {
+class MainActivity : AppCompatActivity(),
+    OnMapReadyCallback, PermissionsListener,
+    SymbolsManagerInterface, RouteOptimizationInterface {
 
-    // variables for adding location layer
     lateinit var mapboxMap: MapboxMap
-
     private var permissionsManager: PermissionsManager = PermissionsManager(this)
 
     // For Places plugin (Search) functionality
@@ -61,14 +61,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private val mainActivityViewModel: MainActivityViewModel by viewModels()
 
     private val geojsonSourceLayerId = "geojsonSourceLayerId"
-    private val symbolIconId = "symbolIconId" // Maybe won't be used, should delete?
-    private val RED_MARKER = "RED_MARKER" // Corresponds to locations that are searched but not added in stopsHashMap
-    private val BLUE_MARKER = "BLUE_MARKER" // Corresponds to locations added in stopsHashMap
+    private val symbolIconId = "symbolIconId"
+    private val RED_MARKER = "RED_MARKER" // For locations that are searched but not added in stopsHashMap
+    private val BLUE_MARKER = "BLUE_MARKER" // For locations added in stopsHashMap
     private var latestSearchedLocationSymbol: Symbol? = null // Will contain symbolOptions for the latest user searched location's symbol (either searched or clicked)
     private lateinit var symbolManager: SymbolManager // SymbolManager to add/remove symbols on the map
 
     // variables for adding search functionality
-    private val REQUEST_CODE_AUTOCOMPLETE = 1
     private val TEAL_COLOR = "#23D2BE" // For optimized route's line
     private val POLYLINE_WIDTH = 5f // For optimized route's line
     private val SYMBOL_LAYER_ID = "symbol-layer-id"
@@ -80,6 +79,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // Initialize Timber for logging
         if (BuildConfig.DEBUG) { Timber.plant(DebugTree()) }
 
@@ -147,7 +147,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
             //Get an instance of the LocationComponent and then adjust its settings
             mapboxMap.locationComponent.apply {
-                // Activate the LocationComponent with option
+
+                // Activate the LocationComponent with options
                 activateLocationComponent(locationComponentActivationOptions)
 
                 //Enable to make the LocationComponent visible
@@ -208,6 +209,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                             .build()
                     ))
 
+                    // Got a location so perform needed actions
                     performActionsOnSearchResult(selectedCarmenFeature)
                 }
             }
@@ -243,7 +245,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     private fun initSymbolLayer(loadedMapStyle: Style) {
         loadedMapStyle.addLayer(SymbolLayer(SYMBOL_LAYER_ID,
                 geojsonSourceLayerId).withProperties(
-//                iconImage(symbolIconId),
                 PropertyFactory.iconImage(symbolIconId),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconOffset(arrayOf(0f, -8f))
@@ -301,6 +302,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
             // Currently there is functionality only for clicking blue markers, clicking on a red symbol will have no effect.
 
             if (symbol.iconImage == BLUE_MARKER) {
+
                 // If the previously displayed symbol was red, delete it from the map
                 if (latestSearchedLocationSymbol?.iconImage == RED_MARKER)
                     deleteSymbolFromMap(latestSearchedLocationSymbol!!)
@@ -318,7 +320,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
                 latestSearchedLocationSymbol = symbol
 
                 // Get CarmenFeature from geometry. The symbol was blue so the location exists in stopsHashMap
-//                val carmenFeatureOfSelectedSymbol = DataRepository.stopsHashMap[symbol.geometry]
                 val carmenFeatureOfSelectedSymbol = mainActivityViewModel.stopsHashMap[symbol.geometry]
                 binding.bottomSheetView.setCurrentCarmenFeature(carmenFeatureOfSelectedSymbol!!, symbol.geometry)
 
@@ -443,6 +444,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
     }
 
     fun performActionsOnSearchResult(feature: CarmenFeature) {
+
         // Hide trip distance and duration views because they might were visible
         binding.bottomSheetView.setVisibilityOfDistanceAndDuration(View.GONE)
 
@@ -455,7 +457,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
         resetIconSizeInBlueMarkers()
 
         // Create a symbol for that location if not exists and set it as the latest searched location symbol
-//        if (DataRepository.stopsHashMap.containsKey(feature.geometry())) {
         if (mainActivityViewModel.stopsHashMap.containsKey(feature.geometry())) {
             val existingSymbol = getSymbolByGeometry(feature.geometry()!!)
 
@@ -506,17 +507,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
      * @param waypoints A list of the optimized route's waypoints
      */
     override fun updateNumberInSymbolIcons(waypoints: List<OptimizationWaypoint>) {
-        DataRepository.alreadyCheckedWaypoints.clear()
+        WaypointUtil.alreadyCheckedWaypoints.clear()
 
         for (i in 0 until symbolManager.annotations.size()) {
             val currentSymbol = symbolManager.annotations.valueAt(i)
 
             if (currentSymbol.iconImage == BLUE_MARKER) {
 
-                // Decide which number to show on current symbol based on its latitude-longitude
-                val waypointIndex = DataRepository.getWaypointIndexByLatLng(waypoints, currentSymbol.latLng)
+                // Decide which number to show on current symbol based on its latitude-longitude. Starts at 0
+                val waypointIndex = WaypointUtil.getWaypointIndexByLatLng(waypoints, currentSymbol.latLng)
 
-                currentSymbol.textField = waypointIndex?.let { it.toString() } ?: "?" // Better UX to show "?" than to show "null"
+                currentSymbol.textField = waypointIndex?.let { (it + 1).toString() } ?: "?" // Better UX-wise to show "?" than to show "null"
                 currentSymbol.textAnchor = Property.TEXT_ANCHOR_CENTER // Anchor of blue marker is its central circle
                 currentSymbol.textColor = "white"
                 currentSymbol.textHaloColor = "black"
@@ -574,11 +575,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, PermissionsListene
 
     override fun onDestroy() {
         super.onDestroy()
-        // Pare optimizedClient apo bottom sheet manager
-        //optimizedClient?.cancelCall()
         binding.mapView.onDestroy()
     }
-
-    // TODO: General cleanup and move the top text in BottomSheetManager in a txt file to remember it
-    // when you read it sometime in the future.
 }

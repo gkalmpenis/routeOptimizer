@@ -20,9 +20,4 @@ interface SymbolsManagerInterface {
     fun clearMapData()
     fun changeIconAndTextSize(symbol: Symbol, iconSize: Float, textSize: Float)
     fun getLatestSearchedSymbol(): Symbol?
-    // Mporeis na peis "val latestSearchedSymbolOne: Symbol?"
-    // kai sthn mainActivity na kaneis
-    // override val latestSearchedSymbolOne: Symbol?
-    //        get() = { return latestSearchedLocationSymbol }
-
 }

@@ -25,19 +25,6 @@ import timber.log.Timber
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-
-/*
-     The current idea is that this class will contain all the information that appear in the bottom sheet like:
-     - CarmenFeature of the current selected location
-     - placeNameTextView information
-     - stopsButton information
-     - currentStopsCounter
-
-     The stuff in here should not be static, a single instance of this object should be created in the MainActivity
-     and this class should help us get at any time information about the current state of all the info that appear
-     inside the bottom sheet
-    */
-
 class BottomSheetManager: ConstraintLayout {
     constructor(context: Context) : super (context)
     constructor(context: Context, attrSet: AttributeSet) : super(context, attrSet)
@@ -46,15 +33,12 @@ class BottomSheetManager: ConstraintLayout {
     init {
         binding = BottomSheetPersistentBinding.inflate(LayoutInflater.from(context), this, true)
     }
-//
-//    // Variable "this" in this class refers to the View of bottomSheet per se!
-//
-    private lateinit var activity: Activity // Is it needed? If yes, it can be set inside initValues()
-//
-    private lateinit var binding: BottomSheetPersistentBinding
-    //    private lateinit var bottomSheetView: View // Should be replaced with "this" . DELETE when done!
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
 
+    // Variable "this" in this class refers to the View of bottomSheet per se!
+
+    private lateinit var activity: Activity
+    private lateinit var binding: BottomSheetPersistentBinding
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var mainActivityViewModel: MainActivityViewModel
     private var currentCarmenFeature: CarmenFeature? = null
     private var currentCarmenFeatureGeometry: Point? = null
@@ -71,18 +55,16 @@ class BottomSheetManager: ConstraintLayout {
     private lateinit var optimizedClient: MapboxOptimization
 
     fun initValues(activity: Activity, mainActivityViewModel: MainActivityViewModel) {
-        this.activity = activity // needed?
+        this.activity = activity
         this.mainActivityViewModel = mainActivityViewModel
-//        this.bottomSheetView = bottomSheetView // Set bottom sheet reference // delete because bottomSheetView is "this" !
         bottomSheetBehavior = BottomSheetBehavior.from(this)
+
         redesignWhenExpanded()
 
         symbolsManagerInterface = activity as SymbolsManagerInterface
         routeOptimizationInterface = activity as RouteOptimizationInterface
 
         changeBottomSheetState(BottomSheetBehavior.STATE_HIDDEN) // Do not reveal bottom sheet on creation of the application.
-
-//        decideOptimizeButtonVisibility(DataRepository.stopsHashMap)
 
         // Initialize listeners
         setOnClickListener()
@@ -98,7 +80,6 @@ class BottomSheetManager: ConstraintLayout {
      */
     private fun setOnClickListener() {
         this.setOnClickListener {
-            Timber.d("setOnClickListener() for bottomsheet called")
             if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
             } else {
@@ -119,13 +100,6 @@ class BottomSheetManager: ConstraintLayout {
             StopsButtonState.REMOVE_A_STOP -> binding.btnStops.text = REMOVE_FROM_STOPS
         }
     }
-
-//    /**
-//     * Sets the text of stops counter according to the size of stopsHashMap
-//     */
-//    fun setStopsCounterText(hashMap: LinkedHashMap<Point, CarmenFeature>) {
-//        binding.tvCurrentStopsCounter.text = hashMap.size.toString()
-//    }
 
     fun setStopsCounterText(text: String) {
         binding.tvCurrentStopsCounter.text = text
@@ -208,7 +182,7 @@ class BottomSheetManager: ConstraintLayout {
      * If stopsHashMap contains >=2 stops it will, else it will not.
      */
     fun decideOptimizeButtonVisibility(hashMapSize: Int) {
-        Timber.d("decideOptimizeButtonVisibility() called")
+        Timber.d("decideOptimizeButtonVisibility")
         if (hashMapSize < 2) {
             binding.btnOptimize.visibility = View.GONE
         } else {
@@ -225,6 +199,7 @@ class BottomSheetManager: ConstraintLayout {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 when (newState) {
                     BottomSheetBehavior.STATE_EXPANDED -> {
+                        Timber.d("redesignWhenExpanded - onStateChanged - state expanded")
                         bottomSheet.post {
                             //workaround for the when the bottomsheet expands with incorrect UI
                             bottomSheet.requestLayout()
@@ -241,11 +216,9 @@ class BottomSheetManager: ConstraintLayout {
 
     private fun addOptimizeButtonOnClickListener() {
         binding.btnOptimize.setOnClickListener {
-//            if (DataRepository.stopsHashMap.size > 12) {
             if (mainActivityViewModel.getStopsHashMapSize() > 12) {
                 Toast.makeText(context, R.string.only_twelve_stops_allowed, Toast.LENGTH_LONG).show()
             } else {
-//                val coordinates = DataRepository.convertStopsToPoints(DataRepository.stopsHashMap)
                 val coordinates = mainActivityViewModel.convertStopsToPoints(mainActivityViewModel.stopsHashMap)
                 //                Point firstPoint = coordinates.get(0);                      // The list of coordinates has at least two items because "optimizeButton" appears after two items have been inserted in stopsHashMap,
                 //                Point lastPoint = coordinates.get(coordinates.size() - 1);  // so we can safely obtain a firstPoint and lastPoint from them.
@@ -270,6 +243,7 @@ class BottomSheetManager: ConstraintLayout {
 
         optimizedClient.enqueueCall(object : Callback<OptimizationResponse?> {
             override fun onResponse(call: Call<OptimizationResponse?>, response: Response<OptimizationResponse?>) {
+                Timber.d("Obtained response for route optimization")
                 if (!response.isSuccessful) {
                     Toast.makeText(context, resources.getString(R.string.no_success), Toast.LENGTH_LONG).show()
                 } else {
@@ -325,10 +299,10 @@ class BottomSheetManager: ConstraintLayout {
         duration?.let {
             val convertedDuration = it.toDuration(DurationUnit.SECONDS)
             val timeString = when (it) {
-                in 0f..3600f -> convertedDuration.toComponents { minutes, seconds, nanoseconds ->
+                in 0f..3600f -> convertedDuration.toComponents { minutes, seconds, _ ->
                     String.format("%02d:%02d", minutes, seconds)
                 }
-                else -> convertedDuration.toComponents { hours, minutes, seconds, nanoseconds ->
+                else -> convertedDuration.toComponents { hours, minutes, seconds, _ ->
                     String.format("%02d:%02d:%02d", hours, minutes, seconds)
                 }
             }
