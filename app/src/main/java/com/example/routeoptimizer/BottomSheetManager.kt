@@ -223,7 +223,7 @@ class BottomSheetManager: ConstraintLayout {
             .coordinates(coordinates)
             .roundTrip(false)
             .overview(DirectionsCriteria.OVERVIEW_FULL)
-            .profile(DirectionsCriteria.PROFILE_DRIVING)
+            .profile(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
 //            .steps(true) // Turn-by-turn instructions
             .accessToken(this.resources.getString(R.string.mapbox_access_token))
             .build()
