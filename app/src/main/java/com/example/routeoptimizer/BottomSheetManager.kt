@@ -3,11 +3,13 @@ package com.example.routeoptimizer
 import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
+import android.content.SharedPreferences
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.preference.PreferenceManager
 import com.example.routeoptimizer.databinding.BottomSheetPersistentBinding
 import com.example.routeoptimizer.viewmodels.MainActivityViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -36,6 +38,14 @@ class BottomSheetManager: ConstraintLayout {
     }
 
     // Variable "this" in this class refers to the View of bottomSheet per se!
+
+    private val preferences: SharedPreferences by lazy {
+        PreferenceManager.getDefaultSharedPreferences(activity)
+    }
+
+    private val preferencesEditor: SharedPreferences.Editor by lazy {
+        PreferenceManager.getDefaultSharedPreferences(activity).edit()
+    }
 
     private lateinit var activity: Activity
     private lateinit var binding: BottomSheetPersistentBinding
@@ -220,6 +230,8 @@ class BottomSheetManager: ConstraintLayout {
 
     private fun getOptimizedRoute(coordinates: List<Point?>) {
 
+        val optimizationProfile = preferences.getString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_DRIVING)?: DirectionsCriteria.PROFILE_DRIVING // Set "driving" by default
+
         // Build the optimized route
         optimizedClient = MapboxOptimization.builder()
             .source(DirectionsCriteria.SOURCE_FIRST) // First means the first element found in coordinates, which would be the first element inserted in stopsHashMap
@@ -227,10 +239,12 @@ class BottomSheetManager: ConstraintLayout {
             .coordinates(coordinates)
             .roundTrip(false)
             .overview(DirectionsCriteria.OVERVIEW_FULL)
-            .profile(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+            .profile(optimizationProfile)
 //            .steps(true) // Turn-by-turn instructions
             .accessToken(this.resources.getString(R.string.mapbox_access_token))
             .build()
+
+        Timber.d("Built the optimizedClient with optimizationProfile: $optimizationProfile")
 
         optimizedClient.enqueueCall(object : Callback<OptimizationResponse?> {
             override fun onResponse(call: Call<OptimizationResponse?>, response: Response<OptimizationResponse?>) {
@@ -313,15 +327,21 @@ class BottomSheetManager: ConstraintLayout {
         binding.btnChooseOptimizationMode.setOnClickListener {
 
             val options = arrayOf("Foot", "Bicycle", "Car", "Car - Consider traffic")
-            val checkedOption = 2
+            val checkedOption = when (preferences.getString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_DRIVING)) {
+                DirectionsCriteria.PROFILE_WALKING -> 0
+                DirectionsCriteria.PROFILE_CYCLING -> 1
+                DirectionsCriteria.PROFILE_DRIVING -> 2
+                DirectionsCriteria.PROFILE_DRIVING_TRAFFIC -> 3
+                else -> 2
+            }
 
             val selectedItemListener =
                 DialogInterface.OnClickListener { dialog, item ->
                     when (item) {
-                        0 -> Toast.makeText(context, "pathsame to foot", Toast.LENGTH_SHORT).show()
-                        1 -> Toast.makeText(context, "pathsame to bicycle", Toast.LENGTH_SHORT).show()
-                        2 -> Toast.makeText(context, "pathsame to car", Toast.LENGTH_SHORT).show()
-                        3 -> Toast.makeText(context, "pathsame to car/traffic", Toast.LENGTH_SHORT).show()
+                        0 -> preferencesEditor.putString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_WALKING).commit()
+                        1 -> preferencesEditor.putString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_CYCLING).commit()
+                        2 -> preferencesEditor.putString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_DRIVING).commit()
+                        3 -> preferencesEditor.putString(Constants.PREFS_STR_OPTIMIZATION_PROFILE, DirectionsCriteria.PROFILE_DRIVING_TRAFFIC).commit()
                     }
                 }
 
@@ -339,7 +359,10 @@ class BottomSheetManager: ConstraintLayout {
         binding.btnClear.setOnClickListener {
             val dialog = MaterialAlertDialogBuilder(context, R.style.MaterialAlertDialog_rounded)
                 .setMessage(R.string.clear_every_stop_txt)
-                .setPositiveButton(R.string.yes) { _, _ -> symbolsManagerInterface.clearMapData() }
+                .setPositiveButton(R.string.yes) { _, _ ->
+                    Timber.d("Clearing map data")
+                    symbolsManagerInterface.clearMapData()
+                }
                 .setNegativeButton(R.string.no) { dialog, _ -> dialog.dismiss() }
                 .setCancelable(true)
 
