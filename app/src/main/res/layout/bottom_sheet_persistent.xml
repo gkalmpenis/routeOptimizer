@@ -157,6 +157,19 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
+        android:id="@+id/btnChooseOptimizationMode"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_width="25dp"
+        android:layout_height="wrap_content"
+        android:text="@string/downwards_filled_arrow"
+        android:visibility="gone"
+        android:layout_marginStart="4dp"
+        app:backgroundTint="@color/mapbox_plugins_bright_blue"
+        app:layout_constraintStart_toEndOf="@+id/btnOptimize"
+        app:layout_constraintTop_toTopOf="@+id/btnOptimize"
+        />
+
+    <Button
         android:id="@+id/btnClear"
         style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
         android:layout_width="wrap_content"

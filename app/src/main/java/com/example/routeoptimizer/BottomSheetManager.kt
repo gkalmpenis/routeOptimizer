@@ -2,6 +2,7 @@ package com.example.routeoptimizer
 
 import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -70,6 +71,7 @@ class BottomSheetManager: ConstraintLayout {
         setOnClickListener()
         addStopsButtonOnClickListener()
         addOptimizeButtonOnClickListener()
+        addChooseOptimizationModeOnClickListener()
         addClearButtonOnClickListener()
     }
 
@@ -165,15 +167,17 @@ class BottomSheetManager: ConstraintLayout {
     }
 
     /**
-     * Will decide if "Optimize" button will be shown.
-     * If stopsHashMap contains >=2 stops it will, else it will not.
+     * Will decide if "Optimize" and "ChooseOptimizationMode" buttons will be shown.
+     * If stopsHashMap contains >=2 stops they will, else they will not.
      */
-    fun decideOptimizeButtonVisibility(hashMapSize: Int) {
-        Timber.d("decideOptimizeButtonVisibility")
+    fun decideOptimizeAndOptionsButtonVisibility(hashMapSize: Int) {
+        Timber.d("decideOptimizeAndOptionsButtonVisibility")
         if (hashMapSize < 2) {
             binding.btnOptimize.visibility = View.GONE
+            binding.btnChooseOptimizationMode.visibility = View.GONE
         } else {
             binding.btnOptimize.visibility = View.VISIBLE
+            binding.btnChooseOptimizationMode.visibility = View.VISIBLE
         }
     }
 
@@ -303,6 +307,32 @@ class BottomSheetManager: ConstraintLayout {
         binding.tvTripDistanceValue.visibility = visibility
         binding.tvTripDurationText.visibility = visibility
         binding.tvTripDurationValue.visibility = visibility
+    }
+
+    private fun addChooseOptimizationModeOnClickListener() {
+        binding.btnChooseOptimizationMode.setOnClickListener {
+
+            val options = arrayOf("Foot", "Bicycle", "Car", "Car - Consider traffic")
+            val checkedOption = 2
+
+            val selectedItemListener =
+                DialogInterface.OnClickListener { dialog, item ->
+                    when (item) {
+                        0 -> Toast.makeText(context, "pathsame to foot", Toast.LENGTH_SHORT).show()
+                        1 -> Toast.makeText(context, "pathsame to bicycle", Toast.LENGTH_SHORT).show()
+                        2 -> Toast.makeText(context, "pathsame to car", Toast.LENGTH_SHORT).show()
+                        3 -> Toast.makeText(context, "pathsame to car/traffic", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+            val dialog = MaterialAlertDialogBuilder(context, R.style.MaterialAlertDialog_rounded)
+                .setTitle(R.string.how_are_you_moving_txt)
+                .setSingleChoiceItems(options, checkedOption, selectedItemListener)
+                .setPositiveButton(R.string.ok) { dialog, _ -> dialog.dismiss() }
+                .setCancelable(true)
+
+            dialog.show()
+        }
     }
 
     private fun addClearButtonOnClickListener() {

@@ -8,10 +8,13 @@
     <string name="current_stops_txt">Current stops:</string>
     <string name="current_stops_counter_txt">0</string>
     <string name="optimize_txt">Optimize</string>
+    <string name="downwards_filled_arrow">▼</string>
+    <string name="how_are_you_moving_txt">How are you moving?</string>
     <string name="clear_txt">Clear</string>
     <string name="clear_every_stop_txt">Clear every stop?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="ok">OK</string>
     <string name="trip_distance_txt">Distance</string>
     <string name="trip_distance_value">0</string>
     <string name="trip_duration_txt">Duration</string>

@@ -539,7 +539,7 @@ class MainActivity : AppCompatActivity(),
             binding.bottomSheetView.setStopsCounterText(it.size.toString())
 
             // Refresh optimize button
-            binding.bottomSheetView.decideOptimizeButtonVisibility(it.size)
+            binding.bottomSheetView.decideOptimizeAndOptionsButtonVisibility(it.size)
         }
     }
 
