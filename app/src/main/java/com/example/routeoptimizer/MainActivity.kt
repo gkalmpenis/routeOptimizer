@@ -16,6 +16,8 @@ import androidx.collection.forEach
 import androidx.core.content.ContextCompat
 import com.example.routeoptimizer.databinding.ActivityMainBinding
 import com.example.routeoptimizer.viewmodels.MainActivityViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
@@ -54,6 +56,8 @@ class MainActivity : AppCompatActivity(),
 
     lateinit var mapboxMap: MapboxMap
     private var permissionsManager: PermissionsManager = PermissionsManager(this)
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var currentGpsLocation: Point? = null // To provide search results close to the user
 
     // For Places plugin (Search) functionality
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
@@ -91,6 +95,8 @@ class MainActivity : AppCompatActivity(),
         binding.mapView.onCreate(savedInstanceState)
         binding.mapView.getMapAsync(this)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        setLastKnownLocation() // set value to "currentGpsLocation"
         initPlacesPluginFunctionality()
         initSearchFabClickListener()
 
@@ -166,6 +172,14 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
+    private fun setLastKnownLocation() {
+        fusedLocationClient.lastLocation.addOnSuccessListener { location->
+            if (location != null) {
+                currentGpsLocation = Point.fromLngLat(location.longitude, location.latitude)
+            }
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -218,9 +232,11 @@ class MainActivity : AppCompatActivity(),
 
     private fun initSearchFabClickListener() {
         binding.fabLocationSearch.setOnClickListener {
+            Timber.d("Providing location search results based on current GPS location: $currentGpsLocation")
             val intent = PlaceAutocomplete.IntentBuilder()
                 .accessToken(Mapbox.getAccessToken() ?: getString(R.string.mapbox_access_token))
                 .placeOptions(PlaceOptions.builder()
+                    .proximity(currentGpsLocation)
                     .backgroundColor(Color.parseColor("#EEEEEE"))
                     .limit(10)
                     .build(PlaceOptions.MODE_CARDS))
