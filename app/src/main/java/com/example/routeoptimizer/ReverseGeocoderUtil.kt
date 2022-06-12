@@ -24,7 +24,7 @@ object ReverseGeocoderUtil {
         try {
             val client = MapboxGeocoding.builder()
                 .accessToken(activity.getString(R.string.mapbox_access_token))
-                .query(Point.fromLngLat(point.longitude(), point.latitude()))
+                .query(point)
                 .geocodingTypes(GeocodingCriteria.TYPE_ADDRESS)
                 .build()
 
