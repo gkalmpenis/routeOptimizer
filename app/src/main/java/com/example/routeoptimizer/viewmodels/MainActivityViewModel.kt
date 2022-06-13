@@ -11,7 +11,7 @@ import timber.log.Timber
 class MainActivityViewModel: ViewModel() {
 
     // We have 2 structures because stopsHashMapLive as a MutableLiveData object must be assigned
-    // to a value in order for the observables to perform actions, so this value will be stopsHashMap.
+    // to a value in order for the observables to perform actions. This value will be stopsHashMap.
     val stopsHashMap = LinkedHashMap<Point, CarmenFeature>()
     var stopsHashMapLive = MutableLiveData<LinkedHashMap<Point, CarmenFeature>>() // This is what will be observed
 
