@@ -363,7 +363,7 @@ class MainActivity : AppCompatActivity(),
             // Delete every symbol
             symbolManager.deleteAll()
 
-            // Delete optimized route line (along with its arrows)
+            // To delete the optimized route line (along with its arrows) set an empty GeoJson in its source
             val optimizedSource = it.getSourceAs<GeoJsonSource>(OPTIMIZED_ROUTE_SOURCE_ID)
             optimizedSource?.setGeoJson(FeatureCollection.fromFeatures(ArrayList<Feature>()))
 
