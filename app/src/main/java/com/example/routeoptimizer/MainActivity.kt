@@ -398,12 +398,11 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun specifyIconSize(iconImageString: String): Float {
-        if (iconImageString == RED_MARKER) {
-            return SymbolsManagerInterface.RED_MARKER_ORIGINAL_ICON_SIZE
+        return when (iconImageString) {
+            RED_MARKER -> SymbolsManagerInterface.RED_MARKER_ORIGINAL_ICON_SIZE
+            BLUE_MARKER -> SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_ICON_SIZE
+            else -> 1.0f
         }
-        return if (iconImageString == BLUE_MARKER) {
-            SymbolsManagerInterface.BLUE_MARKER_ORIGINAL_ICON_SIZE
-        } else 1.0f
     }
 
     /**
