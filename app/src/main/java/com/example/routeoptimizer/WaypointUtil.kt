@@ -9,7 +9,7 @@ object WaypointUtil {
     val alreadyCheckedWaypoints = mutableListOf<Int>() // List that indicates which Waypoints should not be checked because they already were
 
     fun getWaypointIndexByLatLng(waypoints: List<OptimizationWaypoint>, latLng: LatLng): Int? {
-        // Since waypoints always have slightly different coordinates than user selected locations,
+        // Since waypoints always have slightly different coordinates than user selected locations (given as argument "latLng"),
         // we will obtain them in approximation within a radius eg. 00.0000 - 00.0006 (+-3).
         // Do not place a large radius otherwise the correctness of the order will be affected.
 
