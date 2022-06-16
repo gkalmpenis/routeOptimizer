@@ -18,6 +18,8 @@ object WaypointUtil {
         waypoints.asSequence()
             .filter { !alreadyCheckedWaypoints.contains(it.waypointIndex()) } // Do not search all the waypoints for optimization purpose
             .forEach {
+                // it.location().coordinates()[0] -> longitude
+                // it.location().coordinates()[1] -> latitude
                 if (it.location()!!.coordinates()[0] in latLng.longitude.minus(precisionRadius/2)..latLng.longitude.plus(precisionRadius/2)
                     && it.location()!!.coordinates()[1] in latLng.latitude.minus(precisionRadius/2)..latLng.latitude.plus(precisionRadius/2)
                 ) {
