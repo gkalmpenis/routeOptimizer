@@ -10,7 +10,7 @@ object WaypointUtil {
 
     fun getWaypointIndexByLatLng(waypoints: List<OptimizationWaypoint>, latLng: LatLng): Int? {
         // Since waypoints always have slightly different coordinates than user selected locations (given as argument "latLng"),
-        // we will obtain them in approximation within a radius eg. 00.0000 - 00.0006 (+-3).
+        // we will obtain them in approximation within a radius eg. 00.0000 - 00.0006 (+-3 or +-33 meters)
         // Do not place a large radius otherwise the correctness of the order will be affected.
 
         val precisionRadius = .0006
