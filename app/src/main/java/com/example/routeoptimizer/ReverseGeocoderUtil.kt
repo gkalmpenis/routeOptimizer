@@ -1,7 +1,5 @@
 package com.example.routeoptimizer
 
-import android.app.Activity
-import android.content.Context
 import android.widget.Toast
 import com.mapbox.api.geocoding.v5.GeocodingCriteria
 import com.mapbox.api.geocoding.v5.MapboxGeocoding
